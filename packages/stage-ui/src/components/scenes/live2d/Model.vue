@@ -1,33 +1,30 @@
 <script setup lang="ts">
 import type { Application } from '@pixi/app'
+import type { Cubism4InternalModel, InternalModel } from 'pixi-live2d-display/cubism4'
 
-import type { PixiLive2DInternalModel } from '../../../composables/live2d'
-
-import { listenBeatSyncBeatSignal } from '@proj-airi/stage-shared/beat-sync/browser'
-import { useTheme } from '@proj-airi/ui'
-import { breakpointsTailwind, until, useBreakpoints, useDebounceFn } from '@vueuse/core'
+import { Container } from '@pixi/display'
+import { breakpointsTailwind, until, useBreakpoints, useDark, useDebounceFn } from '@vueuse/core'
 import { formatHex } from 'culori'
 import { storeToRefs } from 'pinia'
 import { DropShadowFilter } from 'pixi-filters'
 import { Live2DFactory, Live2DModel, MotionPriority } from 'pixi-live2d-display/cubism4'
 import { computed, onMounted, onUnmounted, ref, shallowRef, toRef, watch } from 'vue'
 
-import {
-  createBeatSyncController,
-
-  useLive2DMotionManagerUpdate,
-  useMotionUpdatePluginAutoEyeBlink,
-  useMotionUpdatePluginBeatSync,
-  useMotionUpdatePluginIdleDisable,
-  useMotionUpdatePluginIdleFocus,
-} from '../../../composables/live2d'
+import { useLive2DIdleEyeFocus } from '../../../composables/live2d'
 import { Emotion, EmotionNeutralMotionName } from '../../../constants/emotions'
+import { useBeatSyncStore } from '../../../stores/beat-sync'
 import { useLive2d } from '../../../stores/live2d'
 import { useSettings } from '../../../stores/settings'
 
+type CubismModel = Cubism4InternalModel['coreModel']
+type CubismEyeBlink = Cubism4InternalModel['eyeBlink']
+type PixiLive2DInternalModel = InternalModel & {
+  eyeBlink?: CubismEyeBlink
+  coreModel: CubismModel
+}
+
 const props = withDefaults(defineProps<{
   modelSrc?: string
-  modelId?: string
 
   app?: Application
   mouthOpenSize?: number
@@ -73,8 +70,13 @@ function parsePropsOffset() {
 const modelSrcRef = toRef(() => props.modelSrc)
 
 const modelLoading = ref(false)
-// NOTICE: boolean is sufficient; this flag is only used inside loadModel to bail out if the component unmounts mid-load.
-let isUnmounted = false
+
+// Beat Sync: Values are all in degrees
+const beatSyncTargetY = ref<number>(0)
+const beatSyncTargetZ = ref<number>(0)
+const beatSyncVelocityY = ref<number>(0)
+const beatSyncVelocityZ = ref<number>(0)
+// End of Beat Sync
 
 const offset = computed(() => parsePropsOffset())
 
@@ -87,9 +89,10 @@ const initialModelHeight = ref<number>(0)
 const mouthOpenSize = computed(() => Math.max(0, Math.min(100, props.mouthOpenSize)))
 const lastUpdateTime = ref(0)
 
-const { isDark: dark } = useTheme()
+const dark = useDark()
 const breakpoints = useBreakpoints(breakpointsTailwind)
 const isMobile = computed(() => breakpoints.between('sm', 'md').value || breakpoints.smaller('sm').value)
+const idleEyeFocus = useLive2DIdleEyeFocus()
 const dropShadowFilter = shallowRef(new DropShadowFilter({
   alpha: 0.2,
   blur: 0,
@@ -112,12 +115,7 @@ function setScaleAndPosition() {
 
   const heightScale = (props.height * 0.95 / initialModelHeight.value * offsetFactor)
   const widthScale = (props.width * 0.95 / initialModelWidth.value * offsetFactor)
-  let scale = Math.min(heightScale, widthScale)
-
-  // Prevent zero or NaN values to fix the "headless" model issue.
-  if (Number.isNaN(scale) || scale <= 0) {
-    scale = 1e-6
-  }
+  const scale = Math.min(heightScale, widthScale)
 
   model.value.scale.set(scale * props.scale, scale * props.scale)
 
@@ -125,35 +123,20 @@ function setScaleAndPosition() {
   model.value.y = props.height + offset.value.yOffset
 }
 
-const live2dStore = useLive2d()
 const {
   currentMotion,
   availableMotions,
   motionMap,
   modelParameters,
-} = storeToRefs(live2dStore)
+} = storeToRefs(useLive2d())
 
 const {
   themeColorsHue,
   themeColorsHueDynamic,
   live2dIdleAnimationEnabled,
-  live2dShadowEnabled,
 } = storeToRefs(useSettings())
 
 const localCurrentMotion = ref<{ group: string, index: number }>({ group: 'Idle', index: 0 })
-const beatSync = createBeatSyncController({
-  baseAngles: () => ({
-    x: modelParameters.value.angleX,
-    y: modelParameters.value.angleY,
-    z: modelParameters.value.angleZ,
-  }),
-  initialStyle: 'sway-sine',
-})
-
-// Listen for model reload requests (e.g., when runtime motion is uploaded)
-live2dStore.onShouldUpdateView(() => {
-  loadModel()
-})
 
 async function loadModel() {
   await until(modelLoading).not.toBeTruthy()
@@ -161,28 +144,15 @@ async function loadModel() {
   modelLoading.value = true
   componentState.value = 'loading'
 
-  if (!pixiApp.value || !pixiApp.value.stage) {
-    try {
-      // NOTICE: shouldUpdateView can fire while the canvas (pixiApp) is being torn down/recreated.
-      // Wait briefly for the new stage instead of bailing out, otherwise we keep a blank screen.
-      await until(() => !!pixiApp.value && !!pixiApp.value.stage).toBeTruthy({ timeout: 1500 })
-    }
-    catch {
-      modelLoading.value = false
-      componentState.value = 'mounted'
-      return
-    }
+  if (!pixiApp.value) {
+    modelLoading.value = false
+    componentState.value = 'mounted'
+    return
   }
 
-  // REVIEW: here as await until(...) guarded the pixiApp and stage to be valid.
-  if (model.value && pixiApp.value?.stage) {
-    try {
-      pixiApp.value.stage.removeChild(model.value)
-      model.value.destroy()
-    }
-    catch (error) {
-      console.warn('Error removing old model:', error)
-    }
+  if (model.value) {
+    pixiApp.value.stage.removeChild(model.value)
+    model.value.destroy()
     model.value = undefined
   }
   if (!modelSrcRef.value) {
@@ -193,14 +163,16 @@ async function loadModel() {
   }
 
   try {
-    if (isUnmounted) {
-      modelLoading.value = false
-      componentState.value = 'mounted'
-      return
+    const live2DModel = new Live2DModel<PixiLive2DInternalModel>()
+    if (modelSrcRef.value.startsWith('blob:')) {
+      const res = await fetch(modelSrcRef.value)
+      const blob = await res.blob()
+      await Live2DFactory.setupLive2DModel(live2DModel, [new File([blob], 'model.zip')], { autoInteract: false })
+    }
+    else {
+      await Live2DFactory.setupLive2DModel(live2DModel, modelSrcRef.value, { autoInteract: false })
     }
 
-    const live2DModel = new Live2DModel<PixiLive2DInternalModel>()
-    await Live2DFactory.setupLive2DModel(live2DModel, { url: modelSrcRef.value, id: props.modelId }, { autoInteract: false })
     availableMotions.value.forEach((motion) => {
       if (motion.motionName in Emotion) {
         motionMap.value[motion.fileName] = motion.motionName
@@ -213,8 +185,11 @@ async function loadModel() {
     // --- Scene
 
     model.value = live2DModel
-    // REVIEW: pixiApp and stage are guaranteed to be valid here due to the until(...) above.
-    pixiApp.value!.stage.addChild(model.value)
+
+    if (!pixiApp.value.stage)
+      pixiApp.value.stage = new Container()
+
+    pixiApp.value.stage.addChild(model.value)
     initialModelWidth.value = model.value.width
     initialModelHeight.value = model.value.height
     model.value.anchor.set(0.5, 0.5)
@@ -243,34 +218,6 @@ async function loadModel() {
       })) || []))
       .filter(Boolean)
 
-    // Check if user has selected a runtime motion to play as idle
-    const selectedMotionGroup = localStorage.getItem('selected-runtime-motion-group')
-    const selectedMotionIndex = localStorage.getItem('selected-runtime-motion-index')
-
-    // Configure the selected motion to loop
-    if (selectedMotionGroup && selectedMotionIndex) {
-      const groupIndex = (motionManager.groups as Record<string, any>)[selectedMotionGroup]
-      if (groupIndex !== undefined && motionManager.motionGroups[groupIndex]) {
-        const motionIndex = Number.parseInt(selectedMotionIndex)
-        const motion = motionManager.motionGroups[groupIndex][motionIndex]
-        if (motion && motion._looper) {
-          // Force the motion to loop
-          motion._looper.loopDuration = 0 // 0 means infinite loop
-          console.info('Configured motion to loop infinitely:', selectedMotionGroup, motionIndex)
-        }
-      }
-    }
-
-    if (selectedMotionGroup && selectedMotionIndex && live2dIdleAnimationEnabled.value) {
-      setTimeout(() => {
-        console.info('Playing selected runtime motion:', selectedMotionGroup, selectedMotionIndex)
-        currentMotion.value = {
-          group: selectedMotionGroup,
-          index: Number.parseInt(selectedMotionIndex),
-        }
-      }, 300)
-    }
-
     // Remove eye ball movements from idle motion group to prevent conflicts
     // This is too hacky
     // FIXME: it cannot blink if loading a model only have idle motion
@@ -286,44 +233,119 @@ async function loadModel() {
     }
 
     // This is hacky too
-    const motionManagerUpdate = useLive2DMotionManagerUpdate({
-      internalModel,
-      motionManager,
-      modelParameters,
-      live2dIdleAnimationEnabled,
-      lastUpdateTime,
-    })
+    const hookedUpdate = motionManager.update as (model: CubismModel, now: number) => boolean
+    motionManager.update = function (model: CubismModel, now: number) {
+      const timeDelta = now - lastUpdateTime.value
 
-    motionManagerUpdate.register(useMotionUpdatePluginBeatSync(beatSync), 'pre')
-    motionManagerUpdate.register(useMotionUpdatePluginIdleDisable(), 'pre')
-    motionManagerUpdate.register(useMotionUpdatePluginIdleFocus(), 'post')
-    motionManagerUpdate.register(useMotionUpdatePluginAutoEyeBlink(), 'post')
+      // Beat Sync
+      {
+        // Semi-implicit Euler approach
+        const stiffness = 120 // Higher -> Snappier
+        const damping = 16 // Higher -> Less bounce
+        const mass = 1
 
-    const hookedUpdate = motionManager.update as (model: PixiLive2DInternalModel['coreModel'], now: number) => boolean
-    motionManager.update = function (model: PixiLive2DInternalModel['coreModel'], now: number) {
-      return motionManagerUpdate.hookUpdate(model, now, hookedUpdate)
+        let paramAngleY = coreModel.getParameterValueById('ParamAngleY') as number
+        let paramAngleZ = coreModel.getParameterValueById('ParamAngleZ') as number
+
+        // Y
+        {
+          const target = beatSyncTargetY.value
+          const pos = paramAngleY
+          const vel = beatSyncVelocityY.value
+          const accel = (stiffness * (target - pos) - damping * vel) / mass
+          beatSyncVelocityY.value = vel + accel * timeDelta
+          paramAngleY = pos + beatSyncVelocityY.value * timeDelta
+
+          // Snap
+          if (Math.abs(target - paramAngleY) < 0.01 && Math.abs(beatSyncVelocityY.value) < 0.01) {
+            paramAngleY = target
+            beatSyncVelocityY.value = 0
+          }
+        }
+
+        // Z
+        {
+          const target = beatSyncTargetZ.value
+          const pos = paramAngleZ
+          const vel = beatSyncVelocityZ.value
+          const accel = (stiffness * (target - pos) - damping * vel) / mass
+          beatSyncVelocityZ.value = vel + accel * timeDelta
+          paramAngleZ = pos + beatSyncVelocityZ.value * timeDelta
+
+          // Snap
+          if (Math.abs(target - paramAngleZ) < 0.01 && Math.abs(beatSyncVelocityZ.value) < 0.01) {
+            paramAngleZ = target
+            beatSyncVelocityZ.value = 0
+          }
+        }
+
+        coreModel.setParameterValueById('ParamAngleY', paramAngleY)
+        coreModel.setParameterValueById('ParamAngleZ', paramAngleZ)
+      }
+
+      lastUpdateTime.value = now
+
+      const isIdleMotion = !motionManager.state.currentGroup || motionManager.state.currentGroup === motionManager.groups.idle
+
+      // Stop idle motions if they're disabled
+      if (!live2dIdleAnimationEnabled.value && isIdleMotion) {
+        motionManager.stopAllMotions()
+        // Still update eye focus and blink even if idle motion is stopped
+        idleEyeFocus.update(internalModel, now)
+        if (internalModel.eyeBlink != null) {
+          internalModel.eyeBlink.updateParameters(model, timeDelta / 1000)
+        }
+        // Apply manual eye parameters after auto eye blink
+        coreModel.setParameterValueById('ParamEyeLOpen', modelParameters.value.leftEyeOpen)
+        coreModel.setParameterValueById('ParamEyeROpen', modelParameters.value.rightEyeOpen)
+        return true
+      }
+
+      hookedUpdate?.call(this, model, now)
+
+      // Possibility 1: Only update eye focus when the model is idle
+      // Possibility 2: For models having no motion groups, currentGroup will be undefined while groups can be { idle: ... }
+      if (isIdleMotion) {
+        idleEyeFocus.update(internalModel, now)
+
+        // If the model has eye blink parameters
+        if (internalModel.eyeBlink != null) {
+          // For the part of the auto eye blink implementation in pixi-live2d-display
+          //
+          // this.emit("beforeMotionUpdate");
+          // const motionUpdated = this.motionManager.update(this.coreModel, now);
+          // this.emit("afterMotionUpdate");
+          // model.saveParameters();
+          // this.motionManager.expressionManager?.update(model, now);
+          // if (!motionUpdated) {
+          //   this.eyeBlink?.updateParameters(model, dt);
+          // }
+          //
+          // https://github.com/guansss/pixi-live2d-display/blob/31317b37d5e22955a44d5b11f37f421e94a11269/src/cubism4/Cubism4InternalModel.ts#L202-L214
+          //
+          // If the this.motionManager.update returns true, as motion updated flag on,
+          // the eye blink parameters will not be updated, in another hand, the auto eye blink is disabled
+          //
+          // Since we are hooking the motionManager.update method currently,
+          // and previously a always `true` was returned, eye blink parameters were never updated.
+          //
+          // Thous we are here to manually update the eye blink parameters within this hooked method
+          internalModel.eyeBlink.updateParameters(model, (now - lastUpdateTime.value) / 1000)
+        }
+
+        // Apply manual eye parameters after auto eye blink
+        coreModel.setParameterValueById('ParamEyeLOpen', modelParameters.value.leftEyeOpen)
+        coreModel.setParameterValueById('ParamEyeROpen', modelParameters.value.rightEyeOpen)
+
+        // still, mark the motion as updated
+        return true
+      }
+
+      return false
     }
 
     motionManager.on('motionStart', (group, index) => {
       localCurrentMotion.value = { group, index }
-    })
-
-    // Listen for motion finish to restart runtime motion for looping
-    motionManager.on('motionFinish', () => {
-      const selectedMotionGroup = localStorage.getItem('selected-runtime-motion-group')
-      const selectedMotionIndex = localStorage.getItem('selected-runtime-motion-index')
-
-      if (selectedMotionGroup && selectedMotionIndex && live2dIdleAnimationEnabled.value) {
-        // Restart the selected runtime motion immediately for seamless looping
-        console.info('Motion finished, restarting runtime motion:', selectedMotionGroup, selectedMotionIndex)
-        // Use requestAnimationFrame to restart on the next frame for smooth transition
-        requestAnimationFrame(() => {
-          currentMotion.value = {
-            group: selectedMotionGroup,
-            index: Number.parseInt(selectedMotionIndex),
-          }
-        })
-      }
     })
 
     // Apply all stored parameters to the model
@@ -359,19 +381,7 @@ async function loadModel() {
 
 async function setMotion(motionName: string, index?: number) {
   // TODO: motion? Not every Live2D model has motion, we do need to help users to set motion
-  if (!model.value) {
-    console.warn('Cannot set motion: model not loaded')
-    return
-  }
-
-  console.info('Setting motion:', motionName, 'index:', index)
-  try {
-    await model.value.motion(motionName, index, MotionPriority.FORCE)
-    console.info('Motion started successfully:', motionName)
-  }
-  catch (error) {
-    console.error('Failed to start motion:', motionName, error)
-  }
+  await model.value?.motion(motionName, index, MotionPriority.FORCE)
 }
 
 const handleResize = useDebounceFn(setScaleAndPosition, 100)
@@ -380,40 +390,28 @@ const dropShadowColorComputer = ref<HTMLDivElement>()
 const dropShadowAnimationId = ref(0)
 
 function updateDropShadowFilter() {
-  if (!model.value)
-    return
-
-  if (!live2dShadowEnabled.value) {
-    model.value.filters = []
-    return
+  if (model.value) {
+    const color = getComputedStyle(dropShadowColorComputer.value!).backgroundColor
+    dropShadowFilter.value.color = Number(formatHex(color)!.replace('#', '0x'))
+    model.value.filters = [dropShadowFilter.value]
   }
-
-  const color = getComputedStyle(dropShadowColorComputer.value!).backgroundColor
-  dropShadowFilter.value.color = Number(formatHex(color)!.replace('#', '0x'))
-  model.value.filters = [dropShadowFilter.value]
 }
 
 watch([() => props.width, () => props.height], () => handleResize())
 watch(modelSrcRef, async () => await loadModel(), { immediate: true })
 watch(dark, updateDropShadowFilter, { immediate: true })
 watch([model, themeColorsHue], updateDropShadowFilter)
-watch(live2dShadowEnabled, updateDropShadowFilter)
 watch(offset, setScaleAndPosition)
 watch(() => props.scale, setScaleAndPosition)
 
 // TODO: This is hacky!
 function updateDropShadowFilterLoop() {
   updateDropShadowFilter()
-  if (!live2dShadowEnabled.value) {
-    dropShadowAnimationId.value = 0
-    return
-  }
-
   dropShadowAnimationId.value = requestAnimationFrame(updateDropShadowFilterLoop)
 }
 
-watch([themeColorsHueDynamic, live2dShadowEnabled], ([dynamic, shadowEnabled]) => {
-  if (dynamic && shadowEnabled) {
+watch(themeColorsHueDynamic, () => {
+  if (themeColorsHueDynamic.value) {
     dropShadowAnimationId.value = requestAnimationFrame(updateDropShadowFilterLoop)
   }
   else {
@@ -587,17 +585,23 @@ watch(focusAt, (value) => {
   model.value.focus(value.x, value.y)
 })
 
+const beatSyncStore = useBeatSyncStore()
+
 onMounted(() => {
-  const removeListener = listenBeatSyncBeatSignal(() => beatSync.scheduleBeat())
-  onUnmounted(() => removeListener())
+  const onBeat = () => {
+    beatSyncTargetY.value = Math.max(-5, Math.min(5, (beatSyncTargetY.value < 0 ? 10 : -10) * (0.5 + Math.random() * 0.3)))
+    beatSyncTargetZ.value = Math.max(-5, Math.min(5, (beatSyncTargetZ.value < 0 ? 10 : -10) * (0.5 + Math.random() * 0.3)))
+  }
+
+  beatSyncStore.on('beat', onBeat)
+
+  onUnmounted(() => {
+    beatSyncStore.off('beat', onBeat)
+  })
 })
 
 onMounted(async () => {
   updateDropShadowFilter()
-})
-
-onUnmounted(() => {
-  isUnmounted = true
 })
 
 function listMotionGroups() {

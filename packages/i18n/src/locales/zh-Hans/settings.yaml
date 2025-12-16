@@ -1,11 +1,16 @@
 common:
   save: 保存
+  apply: 应用
+  refresh: 刷新
+  loading: 加载中...
+  saving: 保存中...
+  search: 搜索
+
 animations:
   stage-transitions:
     title: 是否开启舞台动画
   use-page-specific-transitions:
-    description: >-
-      某些页面会有自己的过场动画，这将覆盖舞台过场动画
+    description: 某些页面会有自己的过场动画，这将覆盖舞台过场动画
     title: 是否使用页面特定过场动画
 dialogs:
   onboarding:
@@ -20,19 +25,17 @@ dialogs:
     accountId: 账户 ID
     validationSuccess: 配置验证成功
     validationFailed: 配置验证失败
-    validationError: '验证错误：{error}'
+    validationError: 验证错误：{error}
     skipForNow: 暂时跳过
     saveAndContinue: 保存并继续
     next: 下一步
     start: 开始吧！
     select-model: 选择模型
     no-models: 找不到可用模型
-    no-models-help: >-
-      请返回上一步并检查您的 API Key，或检查网络连接。
+    no-models-help: 请返回上一步并检查您的 API Key，或检查网络连接。
 language:
   title: 语言
-  description: >
-    切换显示界面的语言
+  description: 切换显示界面的语言
 live2d:
   change-model:
     from-file: 从文件加载
@@ -56,9 +59,9 @@ live2d:
     title: 想切换至3D虚拟形象？
     change-to-vrm: 切换至3D虚拟形象设定页面（VRM）
   theme-color-from-model:
-    title: 从模型提取主题颜色
     button-extract:
       title: 提取
+    title: 从模型提取主题颜色
   focus:
     title: 禁用模型鼠标跟踪
     button-disable:
@@ -70,7 +73,7 @@ pages:
     activate: 激活
     active: 已激活
     active_badge: 当前使用中
-    cancel: Cancel action
+    cancel: 取消
     card_not_found: 未找到角色卡
     character: 角色设定
     close: 关闭
@@ -102,29 +105,26 @@ pages:
         systemprompt: 你将收到消息，请像真实人类一样回复。
         posthistoryinstructions: 记得模仿人类的行为。
       fields_info:
-        subtitle: >-
-          您可以在这里填写有关您正在创建的角色的一些详细信息，解释他的背景和情境，以及应该如何回应您的互动。
+        subtitle: 您可以在这里填写有关您正在创建的角色的一些详细信息，解释他的背景和情境，以及应该如何回应您的互动。
         name: 是该角色的正式名称。
         nickname: 您也可以提供一个昵称，它将被优先使用。
         description: 该角色的描述。
         notes: 如果您想添加一些个人备注。
-        personality: >-
-          在这里描述您的角色的个性。例如：害羞？好奇？其他？
+        personality: 在这里描述您的角色的个性。例如：害羞？好奇？其他？
         scenario: 周围环境是怎样的？当前的情境是什么？
         greetings_field: 问候语
         greetings: 您的角色应该如何说“你好”？
         systemprompt: 在这里向 AI LLM 解释当被提示时应该如何回应。
         posthistoryinstructions: 在消息历史之后，放入 AI LLM 应该阅读的内容。
-        version: >-
-          卡片版本，如果您从之前的卡片做了更改，应当增加此版本号。
+        version: 卡片版本，如果您从之前的卡片做了更改，应当增加此版本号。
       errors:
         name: 错误：你必须提供一个有效的名称！
-        version: '错误：版本号无效！'
-        description: '错误：你必须为此卡片提供描述。'
-        personality: '错误：必须为该角色提供性格描述。'
-        scenario: '错误：必须提供一个情境。'
-        systemprompt: '错误：请提供系统提示。'
-        posthistoryinstructions: '错误：必须提供消息历史后的提示。'
+        version: 错误：版本号无效！
+        description: 错误：你必须为此卡片提供描述。
+        personality: 错误：必须为该角色提供性格描述。
+        scenario: 错误：必须提供一个情境。
+        systemprompt: 错误：请提供系统提示。
+        posthistoryinstructions: 错误：必须提供消息历史后的提示。
     modules: 模块
     name_asc: 名称 (A-Z)
     name_desc: 名称 (Z-A)
@@ -147,112 +147,124 @@ pages:
   memory:
     description: 存放记忆的地方，以及策略
     title: 记忆体
-  data:
-    title: Data
-    description: Manage stored AIRI data, exports, and resets
-    sections:
-      chats:
-        title: Chat sessions
-        description: Export or import saved chat sessions.
-        export: Export chats
-        import: Import chats
-        delete: Delete all chat sessions
-      models:
-        title: Models
-        description: Remove imported Live2D/VRM models.
-        delete: Delete all models
-      modules:
-        title: Modules
-        description: Reset module preferences and credentials.
-        reset: Reset module settings
+    short_term:
+      title: 短期记忆
+      description: 短期记忆存储最近的对话上下文，帮助 AIRI 维持连贯的对话
+      saved: 配置已应用
+      provider: 短期记忆提供商
       providers:
-        title: Providers
-        description: Reset all provider settings and credentials.
-        reset: Reset provider settings
-      danger:
-        title: Danger zone
-        description: Irreversible actions. Export what you need before continuing.
-      all:
-        title: Delete all data
-        description: Wipe every local setting, provider config, and model.
-        delete: Delete all data
-      desktop:
-        title: Reset desktop settings & states
-        description: Clear AIRI desktop settings and runtime state.
-        reset: Reset desktop data
-    confirmations:
-      tooltip: Are you sure?
-      yes: Yes
-    status:
-      exported: Chat sessions exported.
-      imported: Chat sessions imported.
-      import_error: Failed to import chat sessions. Please check the file format.
-      chats_deleted: Chat sessions deleted.
-      models_deleted: Models deleted.
-      modules_reset: Module settings reset.
-      providers_reset: Provider settings reset.
-      all_deleted: All local data deleted.
-      desktop_reset: Desktop data reset.
+        localRedis: 本地 Redis
+        upstash: Upstash Redis（无服务器）
+        vercelKv: Vercel KV
+      providerHint: 在「模块 → 短期记忆」中配置不同提供商的详细设置
+      currentProvider: 当前提供商：
+      changeProviderHint: 请在「设置 → 记忆体」中切换提供商
+      enable: 启用短期记忆
+      enableDescription: 为当前浏览器会话持久化最近的对话上下文
+      namespace: 命名空间键前缀
+      retention: 短期记忆保留的消息数量
+      retentionHint: 更高的值保留更多消息，但可能会拖慢提示速度
+      ttl: TTL（秒）
+      ttlHint: 消息在此时长后从短期存储中过期
+      upstashTitle: Upstash Redis 配置
+      redisTitle: Redis 连接
+      redisHost: 主机地址
+      redisPort: 端口
+      redisPassword: 密码
+      redisPasswordPlaceholder: 可选密码
+      session: 会话控制
+      sessionHint: 短期记忆按会话隔离
+      newSession: 开始新会话
+      clear: 清除会话记忆
+      history: 最近消息
+      historyHint: 预览馈送给 LLM 的缓存上下文
+      disabledMessage: 启用短期记忆以在本地保留聊天历史
+      empty: 尚未缓存任何消息
+      vercelKvTitle: Vercel KV 配置
+      vercelKvDescription: 部署到 Vercel 时会自动从环境变量加载 Vercel KV 配置。
+      vercelKvHint: 无需额外配置。
+    long_term:
+      title: 长期记忆
+      description: 长期记忆使用向量数据库存储重要记忆，支持语义搜索和跨设备同步
+      saved: 配置已应用
+      enable: 启用长期记忆
+      enableDescription: 使用配置的数据库和嵌入模型存储记忆
+      provider: 长期记忆提供商
+      providers:
+        postgres: Postgres + pgvector
+        qdrant: Qdrant
+      embeddingHint: 请前往「设置 → 记忆体 → 嵌入配置」填写嵌入凭据。
+      connectionTitle: 数据库连接
+      connectionString: 连接字符串
+      connectionHint: 可选：如果您更喜欢键值配置，可以覆盖下面的各个字段
+      host: 主机地址
+      port: 端口
+      database: 数据库
+      user: 用户名
+      password: 密码
+      ssl: 需要 SSL/TLS
+      qdrantTitle: Qdrant 配置
+      qdrantUrl: 端点 URL
+      qdrantApiKey: API 密钥
+      qdrantApiKeyPlaceholder: 公共实例可选
+      qdrantCollection: 集合名称
+      qdrantVectorSize: 向量大小
+      embeddingTitle: 嵌入提供商
+      embeddingProvider: 提供商
+      embeddingProviders:
+        openai: OpenAI
+        openaiCompatible: OpenAI 兼容
+        cloudflare: Cloudflare AI
+      apiKey: API 密钥
+      baseUrl: 基础 URL
+      accountId: 账户 ID
+      apiToken: API 令牌
+      model: 嵌入模型名称
+      modelHint: 输入嵌入模型的确切标识符。留空则使用默认值
+      promoteAssistant: 自动持久化助手消息
+      promoteUser: 自动持久化用户消息
+      userId: 用于记忆索引的用户标识符
+      userIdPlaceholder: 例如 airi@home
+      userIdHint: 使用一致的标识符在设备间同步记忆
+      searchTitle: 搜索记忆
+      searchHint: 使用语义搜索查找相关记忆
+      searchPlaceholder: AIRI 应该记住什么...
+      export: 导出 JSON
+      disabledMessage: 启用长期记忆以访问搜索 API
+      exportPreview: 导出预览
+      searching: 正在搜索记忆...
+      empty: 尚无匹配的记忆
+    embedding:
+      title: 嵌入配置
+      description: 配置用于长期记忆语义搜索的嵌入服务提供商
+      envHint: '字段会自动从 MEMORY_EMBEDDING_PROVIDER、MEMORY_EMBEDDING_API_KEY、MEMORY_EMBEDDING_BASE_URL、MEMORY_EMBEDDING_MODEL（或带 VITE_ 前缀的变体）等环境变量中填充。'
+      manualTitle: 手动配置指南
+      stepGenerate: 从提供商（如 OpenAI、Cloudflare 或兼容 OpenAI 的服务）生成一组可用的嵌入 API 凭据。
+      stepEnv: 将这些凭据添加到部署环境变量并重新部署，以便字段能够自动填充。
+      stepFallback: 如果无法自动填充，可在此手动粘贴数值后点击“保存配置”。
+      provider: 提供商
+      providers:
+        openai: OpenAI
+        openaiCompatible: OpenAI 兼容
+        cloudflare: Cloudflare Workers AI
+      apiKey: API 密钥
+      baseUrl: 基础 URL
+      accountId: 账户 ID
+      apiToken: API 令牌
+      model: 模型
   models:
     description: 切换角色的 Live2D，VRM 模型
     title: 角色模型
     sections:
       section:
+        scene: 场景
         live2d:
-          title: Live2D
           description: 配置 Live2D 模型
+          title: Live2D
         vrm:
           title: VRM
           description: 配置 3D VRM 模型
-        scene: 场景
   modules:
-    beat_sync:
-      description: 随音源节拍律动
-      title: 同步音律
-      sections:
-        audio_source:
-          actions:
-            start_screen_capture: 开始屏幕录制
-            stop: 停止
-          description: 选择音频来源以检测其中的节拍
-          title: 音频来源
-        beat_visualizer:
-          title: 节拍可视化
-        parameters:
-          advanced_parameters: 高级参数
-          description: 调整节拍检测参数
-          title: 参数
-          parameters:
-            adaptive_threshold:
-              description: >-
-                是否根据信号随时间变化的方差应用自适应阈值
-              label: 自适应阈值
-            buffer_duration:
-              description: 内部分析缓冲区的持续时间
-              label: 缓冲时长
-            envelope_filter_frequency:
-              description: >-
-                应用于平滑能量变化的包络滤波器频率
-              label: 包络滤波器频率
-            highpass_filter_frequency:
-              description: >-
-                高通滤波器的频率设置，用于抑制低频噪声（如次低频噪声）
-              label: 高通滤波器频率
-            lowpass_filter_frequency:
-              description: >-
-                低通滤波器的频率设置，用于削减高频信号（如人声）
-              label: 低通滤波器频率
-            min_beat_interval:
-              description: 最大每分钟节拍数（BPM）或检测到的节拍之间最小间隔
-              label: 最大BPM / 最小节拍间隔
-            sensitivity:
-              label: 灵敏度
-            spectral_flux:
-              description: 启用基于频谱流的节拍起始检测。
-              label: 频谱流
-            warmup:
-              description: 在检测节拍之前进行预热，以提高准确性
-              label: 预热
     consciousness:
       description: 人格设定、使用的模型等配置
       sections:
@@ -321,6 +333,9 @@ pages:
     memory-short-term:
       description: 短期记忆
       title: 短期记忆
+    messaging:
+      description: 配置AIRI的消息平台
+      title: 消息
     messaging-discord:
       description: Discord 发消息和语音聊天
       title: Discord
@@ -330,6 +345,15 @@ pages:
       token-description: 您的Discord机器人令牌
       token-placeholder: 输入您的Discord机器人令牌
       configured: Discord已正确配置！
+    messaging-telegram:
+      description: Telegram 发消息和贴纸互动
+      title: Telegram
+      enable: 启用Telegram集成
+      enable-description: 允许AIRI通过Telegram进行互动
+      token: 机器人令牌
+      token-description: 您从@BotFather获取的Telegram机器人令牌
+      token-placeholder: 输入您的Telegram机器人令牌
+      configured: Telegram已正确配置！
     speech:
       description: 语音合成
       sections:
@@ -348,7 +372,6 @@ pages:
             no_models_description: 该服务来源的模型列表没有返回任何的数据
             no_voices: 没有任何可用的声线
             no_voices_description: 该服务来源的声线列表没有返回任何的数据
-            no_voices_hint: 可以在下方输入自定义声线名字
             pause: Pause
             play_sample: Play
             search_models_placeholder: 搜索模型...
@@ -357,10 +380,12 @@ pages:
             search_voices_results: 找到 {count} / {total} 个声线
             unsupported_voice_warning_title: 没有支持的声线
             unsupported_voice_warning_content: >-
-              我们正在尽快支持该模型的所有音色，如果你迫切希望支持该模型音色，请在 GitHub 上联系我们 https://github.com/moeru-ai/airi/issues
+              我们正在尽快支持该模型的所有音色，如果你迫切希望支持该模型音色，请在 GitHub 上联系我们
+              https://github.com/moeru-ai/airi/issues
             show_less: 显示更少
             show_more: 显示更多
             title: 选择语音合成服务来源
+            no_voices_hint: 可以在下方输入自定义声线名字
           voice-settings:
             input-ssml:
               placeholder: 请输入 SSML 文本
@@ -370,8 +395,42 @@ pages:
       title: 发声
     title: 机体模块
     vision:
-      description: 视觉
+      description: 计算机视觉和图像分析
       title: 视觉
+      enable_camera: 启用摄像头捕获
+      enable_camera_description: 允许AIRI使用摄像头进行图像分析
+      enable_screen: 启用屏幕捕获
+      enable_screen_description: 允许AIRI捕获和分析屏幕内容
+      auto_analyze: 捕获后自动分析
+      auto_analyze_description: 自动分析捕获的图像
+      test_platform:
+        title: 视觉测试平台
+        description: 测试和配置视觉识别能力
+      sections:
+        section:
+          provider-selection:
+            description: 选择AI视觉分析提供商
+        test-platform:
+          title: 测试平台
+          description: 测试和可视化视觉识别
+      actions:
+        start_camera: 启动摄像头
+        start_screen: 开始屏幕捕获
+        stop_capture: 停止捕获
+        capture_frame: 捕获帧
+        upload_image: 上传图片
+        analyze: 分析图像
+      captured_image: 捕获的图像
+      prompt_label: 分析提示
+      prompt_placeholder: 这张图片中你看到了什么？
+      analysis_result: 分析结果
+      analyzing: 分析中...
+      capabilities:
+        object_detection: 物体检测
+        scene_analysis: 场景分析
+        text_recognition: 文字识别 (OCR)
+        face_analysis: 人脸分析
+        emotion_detection: 情绪检测
     x:
       description: X / Twitter 的浏览和使用
       title: X / Twitter
@@ -397,11 +456,10 @@ pages:
     explained:
       chat: 文本生成模型服务来源，例如 OpenRouter, OpenAI, Ollama
       Speech: 语音（文本转语音）模型服务来源，例如 ElevenLabs, Azure Speech
-      Transcription: >-
-        转录（语音转文本）模型服务来源，例如 Whisper.cpp, OpenAI, Azure Speech
+      Transcription: 转录（语音转文本）模型服务来源，例如 Whisper.cpp, OpenAI, Azure Speech
     helpinfo:
       title: 第一次使用？
-      description: >
+      description: |
         AIRI 需要配置至少一个 {chat} 服务来源，才能正常思考和运作。你可以把它看作是 AIRI 系统中角色的大脑。
     common:
       fields:
@@ -448,14 +506,11 @@ pages:
         helpinfo:
           title: 开始之前
           description:
-            part1: >-
-              虽然 Anthropic 最近宣布他们正在提供对 OpenAI SDK 兼容性的 Beta 版支持
-            part2: '（您可以在此处阅读更多信息）'
+            part1: 虽然 Anthropic 最近宣布他们正在提供对 OpenAI SDK 兼容性的 Beta 版支持
+            part2: （您可以在此处阅读更多信息）
             part3: 但由于实现细节附带
-            part4: >-
-              与 OpenAI SDK 不一致，目前无法在浏览器中使用此提供程序。
-            part5: >-
-              如果您确实需要使用此提供程序，则需要一个专用的代理后端，例如在
+            part4: 与 OpenAI SDK 不一致，目前无法在浏览器中使用此提供程序。
+            part5: 如果您确实需要使用此提供程序，则需要一个专用的代理后端，例如在
             part6: 上运行的Serverless Function，或者一些绕过 CORS 的服务，以绕过 CORS 限制。
       cloudflare-workers-ai:
         description: Cloudflare.com
@@ -607,9 +662,6 @@ pages:
       cerebras:
         description: cerebras.ai
         title: Cerebras
-      aliyun-nls:
-        description: Aliyun NLS
-        title: Aliyun NLS
       transcriptions:
         playground:
           title: 实验平台
@@ -647,79 +699,72 @@ pages:
                 description: 测试快捷键
         theme-presets:
           presets:
-            default:
-              colors:
-                color-1: AIRI Green
-              description: The default greenish theme color, brought by AIRI to you!
-              title: Default Color
-            morandi:
-              colors:
-                color-1: Taupe
-                color-2: Beige
-                color-3: Ash Grey
-                color-4: Light Taupe
-                color-5: Ivory
-                color-6: Olive Grey
-                color-7: Sand
-                color-8: Warm Grey
-              description: Soft, muted tones inspired by Giorgio Morandi's paintings
-              title: Morandi Colors
-            monet:
-              colors:
-                color-1: Sky Blue
-                color-2: Mist
-                color-3: Sand
-                color-4: Moss Green
-                color-5: Water Lily
-                color-6: Wheat
-                color-7: Slate Blue
-                color-8: Sage
-              description: Impressionist palette inspired by Claude Monet's works
-              title: Monet Colors
-            japanese:
-              colors:
-                color-1: Tan
-                color-2: Warm Taupe
-                color-3: Umber
-                color-4: Coffee
-                color-5: Bronze
-                color-6: Gold
-                color-7: Mustard
-                color-8: Amber
-              description: Traditional Japanese color palette
-              title: Japanese Colors
-            nordic:
-              colors:
-                color-1: Nordic Blue
-                color-2: Ice
-                color-3: Fjord
-                color-4: Steel
-                color-5: Glacier
-                color-6: Slate
-                color-7: Cloud
-                color-8: Stone
-              description: Scandinavian minimalist color scheme
-              title: Nordic Colors
-            chinese:
-              colors:
-                color-1: Rosy Dawn
-                color-2: Chinese Red
-                color-3: Smoky Brown
-                color-4: Bamboo Green
-                color-5: Dark Purple
-                color-6: Golden Yellow
-                color-7: Azure Blue
-                color-8: Ochre
-              description: >-
-                Traditional Chinese colors, derived from ancient textiles, porcelain and paintings
-              title: Chinese Traditional Colors
+            - colors:
+                - AIRI 绿
+              description: 默认的绿色主题，由 AIRI 为您带来！
+              title: 默认颜色
+            - colors:
+                - 灰褐色
+                - 米色
+                - 灰白色
+                - 浅灰褐色
+                - 象牙色
+                - 橄榄灰
+                - 沙色
+                - 暖灰色
+              description: 受乔治·莫兰迪绘画启发的柔和、低调的色调
+              title: Morandi 颜色
+            - colors:
+                - 天蓝色
+                - 薄雾色
+                - 沙色
+                - 苔藓绿
+                - 睡莲色
+                - 小麦色
+                - 板岩蓝
+                - 鼠尾草色
+              description: 受克劳德·莫奈作品启发的印象派调色板
+              title: 莫奈颜色
+            - colors:
+                - 棕褐色
+                - 暖灰褐色
+                - 赭色
+                - 咖啡色
+                - 青铜色
+                - 金色
+                - 芥末色
+                - 琥珀色
+              description: 传统日本色彩调色板
+              title: 日本颜色
+            - colors:
+                - 北欧蓝
+                - 冰色
+                - 峡湾色
+                - 钢铁色
+                - 冰川色
+                - 板岩色
+                - 云色
+                - 石头色
+              description: 北欧极简主义配色方案
+              title: 北欧颜色
+            - colors:
+                - 霞光红
+                - 枣红
+                - 黄栌
+                - 竹青
+                - 乌梅紫
+                - 缃色
+                - 青冥
+                - 赭石
+              description: 中国传统色彩，源自古代纺织品、瓷器和绘画
+              title: 中国传统颜色
           title: 预设
     title: 外观
   page:
     developers:
       open-devtools:
-        title: 打开开发者工具
         button: 打开
+        title: 打开开发者工具
 sections:
   section:
     general:
@@ -730,6 +775,27 @@ theme:
     切换 AIRI 的基础主题，亮色模式或暗色模式。
 title: 设置
 voices: 声线
+settings:
+  memory:
+    saved: 配置已保存
+    embedding:
+      title: 嵌入配置
+      description: 配置用于长期记忆语义搜索的嵌入服务提供商
+      envHint: '字段会自动从 MEMORY_EMBEDDING_PROVIDER、MEMORY_EMBEDDING_API_KEY、MEMORY_EMBEDDING_BASE_URL、MEMORY_EMBEDDING_MODEL（或带 VITE_ 前缀的变体）等环境变量中填充。'
+      manualTitle: 手动配置指南
+      stepGenerate: 从提供商（如 OpenAI、Cloudflare 或兼容 OpenAI 的服务）生成一组可用的嵌入 API 凭据。
+      stepEnv: 将这些凭据添加到部署环境变量并重新部署，以便字段能够自动填充。
+      stepFallback: 如果无法自动填充，可在此手动粘贴数值后点击"保存配置"。
+      provider: 提供商
+      providers:
+        openai: OpenAI
+        openaiCompatible: OpenAI 兼容
+        cloudflare: Cloudflare Workers AI
+      apiKey: API 密钥
+      baseUrl: 基础 URL
+      accountId: 账户 ID
+      apiToken: API 令牌
+      model: 模型
 vrm:
   change-model:
     from-file: 从文件加载
@@ -770,6 +836,83 @@ vrm:
   skybox:
     skybox-intensity: 天空盒光照强度
     skybox-specular-mix: 漫反射/镜面反射混合系数
-wip:
-  title: 正在开发中
-  description: 此功能正在开发中，尚未公开发布。请在未来的更新中再次查看此功能。
+memory:
+  short_term:
+    title: 短期记忆
+    description: 短期记忆存储最近的对话上下文，帮助 AIRI 维持连贯的对话
+    saved: 配置已应用
+    provider: 短期记忆提供商
+    providers:
+      localRedis: 本地 Redis
+      upstash: Upstash Redis（无服务器）
+      vercelKv: Vercel KV
+    enable: 启用短期记忆
+    enableDescription: 为当前浏览器会话持久化最近的对话上下文
+    namespace: 命名空间键前缀
+    retention: 短期记忆保留的消息数量
+    retentionHint: 更高的值保留更多消息，但可能会拖慢提示速度
+    ttl: TTL（秒）
+    ttlHint: 消息在此时长后从短期存储中过期
+    upstashTitle: Upstash Redis 配置
+    redisTitle: Redis 连接
+    redisHost: 主机地址
+    redisPort: 端口
+    redisPassword: 密码
+    redisPasswordPlaceholder: 可选密码
+    session: 会话控制
+    sessionHint: 短期记忆按会话隔离
+    newSession: 开始新会话
+    clear: 清除会话记忆
+    history: 最近消息
+    historyHint: 预览馈送给 LLM 的缓存上下文
+    disabledMessage: 启用短期记忆以在本地保留聊天历史
+    empty: 尚未缓存任何消息
+  long_term:
+    title: 长期记忆
+    description: 长期记忆使用向量数据库存储重要记忆，支持语义搜索和跨设备同步
+    saved: 配置已应用
+    enable: 启用长期记忆
+    enableDescription: 使用配置的数据库和嵌入模型存储记忆
+    provider: 长期记忆提供商
+    providers:
+      postgres: Postgres + pgvector
+      qdrant: Qdrant
+    connectionTitle: 数据库连接
+    connectionString: 连接字符串
+    connectionHint: 可选：如果您更喜欢键值配置，可以覆盖下面的各个字段
+    host: 主机地址
+    port: 端口
+    database: 数据库
+    user: 用户名
+    password: 密码
+    ssl: 需要 SSL/TLS
+    qdrantTitle: Qdrant 配置
+    qdrantUrl: 端点 URL
+    qdrantApiKey: API 密钥
+    qdrantApiKeyPlaceholder: 公共实例可选
+    qdrantCollection: 集合名称
+    qdrantVectorSize: 向量大小
+    embeddingTitle: 嵌入提供商
+    embeddingProvider: 提供商
+    embeddingProviders:
+      openai: OpenAI
+      openaiCompatible: OpenAI 兼容
+      cloudflare: Cloudflare AI
+    apiKey: API 密钥
+    baseUrl: 基础 URL
+    accountId: 账户 ID
+    model: 嵌入模型名称
+    modelHint: 输入嵌入模型的确切标识符。留空则使用默认值
+    promoteAssistant: 自动持久化助手消息
+    promoteUser: 自动持久化用户消息
+    userId: 用于记忆索引的用户标识符
+    userIdPlaceholder: 例如 airi@home
+    userIdHint: 使用一致的标识符在设备间同步记忆
+    searchTitle: 搜索记忆
+    searchHint: 使用语义搜索查找相关记忆
+    searchPlaceholder: AIRI 应该记住什么...
+    export: 导出 JSON
+    disabledMessage: 启用长期记忆以访问搜索 API
+    exportPreview: 导出预览
+    searching: 正在搜索记忆...
+    empty: 尚无匹配的记忆

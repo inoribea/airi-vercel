@@ -1,4 +1,5 @@
 import cropImg from '@lemonneko/crop-empty-pixels'
+import JSZip from 'jszip'
 import localforage from 'localforage'
 
 import { Application } from '@pixi/app'
@@ -11,7 +12,6 @@ import { Live2DFactory, Live2DModel } from 'pixi-live2d-display/cubism4'
 import { ref } from 'vue'
 
 import '../utils/live2d-zip-loader'
-import '../utils/live2d-opfs-registration'
 
 export enum DisplayModelFormat {
   Live2dZip = 'live2d-zip',
@@ -25,14 +25,6 @@ export enum DisplayModelFormat {
 export type DisplayModel
   = | DisplayModelFile
     | DisplayModelURL
-
-const presetLive2dProUrl = new URL('../assets/live2d/models/hiyori_pro_zh.zip', import.meta.url).href
-const presetLive2dFreeUrl = new URL('../assets/live2d/models/hiyori_free_zh.zip', import.meta.url).href
-const presetLive2dPreview = new URL('../assets/live2d/models/hiyori/preview.png', import.meta.url).href
-const presetVrmAvatarAUrl = new URL('../assets/vrm/models/AvatarSample-A/AvatarSample_A.vrm', import.meta.url).href
-const presetVrmAvatarAPreview = new URL('../assets/vrm/models/AvatarSample-A/preview.png', import.meta.url).href
-const presetVrmAvatarBUrl = new URL('../assets/vrm/models/AvatarSample-B/AvatarSample_B.vrm', import.meta.url).href
-const presetVrmAvatarBPreview = new URL('../assets/vrm/models/AvatarSample-B/preview.png', import.meta.url).href
 
 export interface DisplayModelFile {
   id: string
@@ -52,13 +44,15 @@ export interface DisplayModelURL {
   name: string
   previewImage?: string
   importedAt: number
+  cached?: boolean
+  cacheKey?: string
 }
 
 const displayModelsPresets: DisplayModel[] = [
-  { id: 'preset-live2d-1', format: DisplayModelFormat.Live2dZip, type: 'url', url: presetLive2dProUrl, name: 'Hiyori (Pro)', previewImage: presetLive2dPreview, importedAt: 1733113886840 },
-  { id: 'preset-live2d-2', format: DisplayModelFormat.Live2dZip, type: 'url', url: presetLive2dFreeUrl, name: 'Hiyori (Free)', previewImage: presetLive2dPreview, importedAt: 1733113886840 },
-  { id: 'preset-vrm-1', format: DisplayModelFormat.VRM, type: 'url', url: presetVrmAvatarAUrl, name: 'AvatarSample_A', previewImage: presetVrmAvatarAPreview, importedAt: 1733113886840 },
-  { id: 'preset-vrm-2', format: DisplayModelFormat.VRM, type: 'url', url: presetVrmAvatarBUrl, name: 'AvatarSample_B', previewImage: presetVrmAvatarBPreview, importedAt: 1733113886840 },
+  { id: 'preset-live2d-1', format: DisplayModelFormat.Live2dZip, type: 'url', url: '/assets/live2d/models/hiyori_pro_zh.zip', name: 'Hiyori (Pro)', previewImage: '/assets/live2d/models/hiyori/preview.png', importedAt: 1733113886840 },
+  { id: 'preset-live2d-2', format: DisplayModelFormat.Live2dZip, type: 'url', url: '/assets/live2d/models/hiyori_free_zh.zip', name: 'Hiyori (Free)', previewImage: '/assets/live2d/models/hiyori/preview.png', importedAt: 1733113886840 },
+  { id: 'preset-vrm-1', format: DisplayModelFormat.VRM, type: 'url', url: '/assets/vrm/models/AvatarSample-A/AvatarSample_A.vrm', name: 'AvatarSample_A', previewImage: '/assets/vrm/models/AvatarSample-A/preview.png', importedAt: 1733113886840 },
+  { id: 'preset-vrm-2', format: DisplayModelFormat.VRM, type: 'url', url: '/assets/vrm/models/AvatarSample-B/AvatarSample_B.vrm', name: 'AvatarSample_B', previewImage: '/assets/vrm/models/AvatarSample-B/preview.png', importedAt: 1733113886840 },
 ]
 
 export const useDisplayModelsStore = defineStore('display-models', () => {
@@ -204,14 +198,280 @@ export const useDisplayModelsStore = defineStore('display-models', () => {
     displayModels.value = displayModels.value.filter(model => model.id !== id)
   }
 
-  async function resetDisplayModels() {
-    await loadDisplayModelsFromIndexedDB()
-    const userModelIds = displayModels.value.filter(model => model.type === 'file').map(model => model.id)
-    for (const id of userModelIds) {
-      await removeDisplayModel(id)
+  // Parse VPM JSON format
+  interface VPMPackage {
+    url?: string
+    version?: string
+  }
+
+  interface VPMManifest {
+    packages?: Record<string, VPMPackage>
+    dependencies?: Record<string, string>
+  }
+
+  async function parseVPMJson(url: string): Promise<{ url: string, name: string } | null> {
+    try {
+      const response = await fetch(url)
+      const data = await response.json() as VPMManifest
+
+      // Try to find VRM package in packages field
+      if (data.packages) {
+        for (const [name, pkg] of Object.entries(data.packages)) {
+          if (pkg.url && (pkg.url.endsWith('.vrm') || pkg.url.endsWith('.zip'))) {
+            return { url: pkg.url, name }
+          }
+        }
+      }
+
+      return null
+    }
+    catch (error) {
+      console.error('Failed to parse VPM JSON:', error)
+      return null
+    }
+  }
+
+  // Convert GitHub blob URL to raw URL
+  function convertGitHubBlobUrlToRaw(url: string): string {
+    // Convert blob URLs to raw URLs
+    // https://github.com/user/repo/blob/branch/path -> https://raw.githubusercontent.com/user/repo/branch/path
+    // https://github.com/user/repo/raw/branch/path -> already raw, keep it
+
+    if (url.includes('github.com') && url.includes('/blob/')) {
+      return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/')
     }
 
-    displayModels.value = [...displayModelsPresets].sort((a, b) => b.importedAt - a.importedAt)
+    return url
+  }
+
+  // Parse model3.json and collect all referenced files
+  interface Model3Json {
+    Version?: number
+    FileReferences?: {
+      Moc?: string
+      Textures?: string[]
+      Physics?: string
+      Pose?: string
+      DisplayInfo?: string
+      Expressions?: Array<{ Name?: string, File?: string }>
+      Motions?: Record<string, Array<{ File?: string, Sound?: string }>>
+      UserData?: string
+    }
+  }
+
+  async function loadModel3JsonAndResources(model3JsonUrl: string): Promise<File> {
+    // Convert GitHub URL to raw if needed
+    const rawUrl = convertGitHubBlobUrlToRaw(model3JsonUrl)
+    const baseUrl = rawUrl.substring(0, rawUrl.lastIndexOf('/'))
+
+    // Fetch model3.json
+    const response = await fetch(rawUrl)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch model3.json: ${response.statusText}`)
+    }
+
+    const model3JsonText = await response.text()
+    const model3Json: Model3Json = JSON.parse(model3JsonText)
+
+    // Collect all file paths from model3.json
+    const filesToFetch: Set<string> = new Set()
+    filesToFetch.add(model3JsonUrl.split('/').pop() || 'model.model3.json')
+
+    const fileRefs = model3Json.FileReferences
+    if (fileRefs) {
+      // Add moc file
+      if (fileRefs.Moc)
+        filesToFetch.add(fileRefs.Moc)
+
+      // Add textures
+      if (fileRefs.Textures) {
+        fileRefs.Textures.forEach(texture => filesToFetch.add(texture))
+      }
+
+      // Add physics
+      if (fileRefs.Physics)
+        filesToFetch.add(fileRefs.Physics)
+
+      // Add pose
+      if (fileRefs.Pose)
+        filesToFetch.add(fileRefs.Pose)
+
+      // Add display info
+      if (fileRefs.DisplayInfo)
+        filesToFetch.add(fileRefs.DisplayInfo)
+
+      // Add user data
+      if (fileRefs.UserData)
+        filesToFetch.add(fileRefs.UserData)
+
+      // Add expressions
+      if (fileRefs.Expressions) {
+        fileRefs.Expressions.forEach((exp) => {
+          if (exp.File)
+            filesToFetch.add(exp.File)
+        })
+      }
+
+      // Add motions
+      if (fileRefs.Motions) {
+        Object.values(fileRefs.Motions).forEach((motionGroup) => {
+          motionGroup.forEach((motion) => {
+            if (motion.File)
+              filesToFetch.add(motion.File)
+            if (motion.Sound)
+              filesToFetch.add(motion.Sound)
+          })
+        })
+      }
+    }
+
+    // Create a zip file
+    const zip = new JSZip()
+
+    // Add model3.json to zip
+    zip.file(model3JsonUrl.split('/').pop() || 'model.model3.json', model3JsonText)
+
+    // Fetch and add all referenced files
+    const fetchPromises = Array.from(filesToFetch)
+      .filter(file => file !== (model3JsonUrl.split('/').pop() || 'model.model3.json'))
+      .map(async (relativePath) => {
+        try {
+          const fileUrl = `${baseUrl}/${relativePath}`
+          const fileResponse = await fetch(convertGitHubBlobUrlToRaw(fileUrl))
+
+          if (!fileResponse.ok) {
+            console.warn(`Failed to fetch ${relativePath}: ${fileResponse.statusText}`)
+            return
+          }
+
+          const fileBlob = await fileResponse.blob()
+          zip.file(relativePath, fileBlob)
+        }
+        catch (error) {
+          console.warn(`Error fetching ${relativePath}:`, error)
+        }
+      })
+
+    await Promise.all(fetchPromises)
+
+    // Generate zip blob
+    const zipBlob = await zip.generateAsync({ type: 'blob' })
+    const modelName = model3JsonUrl.split('/').pop()?.replace('.model3.json', '') || 'model'
+
+    return new File([zipBlob], `${modelName}.zip`, { type: 'application/zip' })
+  }
+
+  // Add model from URL
+  async function addDisplayModelFromURL(url: string, format?: DisplayModelFormat) {
+    await until(displayModelsFromIndexedDBLoading).toBe(false)
+
+    let actualUrl = url
+    let modelName = url.split('/').pop() || 'Unknown Model'
+    let detectedFormat = format
+    let fileToCache: File | null = null
+
+    // Check if it's a model3.json file (Live2D model configuration)
+    if (url.endsWith('.model3.json')) {
+      console.info('Detected model3.json URL, loading model and resources...')
+      try {
+        fileToCache = await loadModel3JsonAndResources(url)
+        modelName = modelName.replace('.model3.json', '')
+        detectedFormat = DisplayModelFormat.Live2dZip
+        actualUrl = url // Keep original URL for reference
+      }
+      catch (error) {
+        console.error('Failed to load model3.json and resources:', error)
+        throw new Error(`Failed to load model3.json: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    }
+    // Check if it's a VPM JSON
+    else if (url.endsWith('.json')) {
+      const vpmData = await parseVPMJson(url)
+      if (vpmData) {
+        actualUrl = vpmData.url
+        modelName = vpmData.name
+      }
+    }
+
+    // Auto-detect format if not provided and not already detected
+    if (!detectedFormat && !fileToCache) {
+      if (actualUrl.endsWith('.vrm')) {
+        detectedFormat = DisplayModelFormat.VRM
+      }
+      else if (actualUrl.endsWith('.zip')) {
+        // Assume Live2D for zip files
+        detectedFormat = DisplayModelFormat.Live2dZip
+      }
+      else {
+        throw new Error('Unable to detect model format. Please specify format manually.')
+      }
+    }
+
+    // Fetch and cache the model if not already done
+    const cacheKey = `model-cache-${nanoid()}`
+    try {
+      let file: File
+
+      if (fileToCache) {
+        // Already have the file from model3.json processing
+        file = fileToCache
+      }
+      else {
+        // Fetch from URL
+        const response = await fetch(actualUrl)
+        const blob = await response.blob()
+        file = new File([blob], modelName, { type: blob.type })
+      }
+
+      // Cache the file
+      await localforage.setItem(cacheKey, { file, url: actualUrl })
+
+      const newDisplayModel: DisplayModelURL = {
+        id: `display-model-${nanoid()}`,
+        format: detectedFormat!,
+        type: 'url',
+        url: actualUrl,
+        name: modelName,
+        importedAt: Date.now(),
+        cached: true,
+        cacheKey,
+      }
+
+      // Generate preview for Live2D models
+      if (detectedFormat === DisplayModelFormat.Live2dZip) {
+        const previewImage = await loadLive2DModelPreview(file)
+        if (previewImage) {
+          newDisplayModel.previewImage = previewImage
+        }
+      }
+
+      displayModels.value.unshift(newDisplayModel)
+
+      // Save metadata to IndexedDB
+      await localforage.setItem(newDisplayModel.id, {
+        ...newDisplayModel,
+        // Don't duplicate the file data in metadata
+        file: undefined,
+      })
+
+      return newDisplayModel
+    }
+    catch (error) {
+      console.error('Failed to fetch and cache model:', error)
+      throw error
+    }
+  }
+
+  // Get cached model file
+  async function getCachedModelFile(cacheKey: string): Promise<File | null> {
+    try {
+      const cached = await localforage.getItem<{ file: File, url: string }>(cacheKey)
+      return cached?.file || null
+    }
+    catch (error) {
+      console.error('Failed to get cached model:', error)
+      return null
+    }
   }
 
   return {
@@ -221,8 +481,9 @@ export const useDisplayModelsStore = defineStore('display-models', () => {
     loadDisplayModelsFromIndexedDB,
     getDisplayModel,
     addDisplayModel,
+    addDisplayModelFromURL,
+    getCachedModelFile,
     renameDisplayModel,
     removeDisplayModel,
-    resetDisplayModels,
   }
 })

@@ -14,11 +14,11 @@
 
 <h1 align="center">Project AIRI</h1>
 
-<p align="center">Neuro-sama を再創造し、AI waifu / バーチャルキャラクターの魂の器をこの世界へ。</p>
-<p align="center">Neuro-sama のようなバーチャルパートナーも、私たちの暮らしの一部に。</p>
+<p align="center">モデル駆動の魂の容器、ちょっとしたことができるデスクペット。</p>
+<p align="center">Neuro-samaのようなバーチャルペアも私たちの世界の一部にしましょう！</p>
 
 <p align="center">
-  [<a href="https://discord.gg/TgQ3Cu2F7A">Discordサーバーに参加する</a>] [<a href="https://airi.moeru.ai">試してみる</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/README.md">English</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.zh-CN.md">简体中文</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.ru-RU.md">Русский</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.vi.md">Tiếng Việt</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.fr.md">Français</a>]
+  [<a href="https://discord.gg/TgQ3Cu2F7A">Discordサーバーに参加する</a>] [<a href="https:///airi.moeru.ai">試してみる</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/README.md">English</a>] [<a href="https://github.com/moeru-ai/airi/blob/main/docs/README.zh-CN.md">简体中文</a>]
 </p>
 
 <p align="center">
@@ -46,7 +46,7 @@
 >
 > RAG、メモリシステム、組み込みデータベース、アイコン、Live2Dユーティリティなど多数あります！
 
-サイバー生命体（サイバーワイフ、デジタルペット）、あるいは一緒に遊んで話せるデジタルコンパニオンを持つことを夢見たことはありますか？
+# サイバー生命体（サイバーワイフ、デジタルペット）や、あなたと遊んだり話したりできるデジタルコンパニオンを持つことを夢見たことはありますか？
 
 [ChatGPT](https://chatgpt.com)や有名な[Claude](https://claude.ai)のような最新の大規模言語モデルの力を借りて、仮想存在に役割演技やチャットを求めることは、すでに誰にとっても十分簡単になっています。[Character.ai（別名c.ai）](https://character.ai)や[JanitorAI](https://janitorai.com/)のようなプラットフォーム、そして[SillyTavern](https://github.com/SillyTavern/SillyTavern)のようなローカルな遊び場は、チャットベースや視覚的なアドベンチャーゲームのような体験のための十分な解決策となっています。
 
@@ -56,23 +56,9 @@
 
 そのため、このプロジェクトAIRIは、ここで別の可能性を提供します：**簡単に、どこでも、いつでも、あなた自身のデジタルライフ、サイバー生活を所有できるようにします**。
 
-## 投稿した DevLog と最近のアップデート
-
-- [DevLog @ 2025.10.20](https://airi.moeru.ai/docs/en/blog/DevLog-2025.10.20/) — 2025/10/20
-- [DevLog @ 2025.08.05](https://airi.moeru.ai/docs/en/blog/DevLog-2025.08.05/) — 2025/08/05
-- [DevLog @ 2025.08.01](https://airi.moeru.ai/docs/en/blog/DevLog-2025.08.01/) — 2025/08/01
-- [DevLog @ 2025.07.18](https://airi.moeru.ai/docs/en/blog/DevLog-2025.07.18/) — 2025/07/18
-- [DreamLog 0x1](https://airi.moeru.ai/docs/en/blog/dreamlog-0x1/) — 2025/06/16
-- ...そのほかは[ドキュメントサイト](https://airi.moeru.ai/docs/en/)で
-
-## このプロジェクトの特別な点は？
+## このプロジェクトの特別な点は何ですか？
 
 他のAI駆動のVTuberオープンソースプロジェクトとは異なり、アイリVTuberは開発初日から[WebGPU](https://www.w3.org/TR/webgpu/)、[WebAudio](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)、[Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)、[WebAssembly](https://webassembly.org/)、[WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)などの多くのWeb技術をサポートしています。
-
-> [!TIP]
-> 「Web技術だとパフォーマンスが落ちない？」と心配ですか？
->
-> ご安心を。ブラウザ版はブラウザやWebViewでどこまでできるかを示すためのものですが、そこに完全依存しません。デスクトップ版 AIRI は標準で [NVIDIA CUDA](https://developer.nvidia.com/cuda-toolkit) と [Apple Metal](https://developer.apple.com/metal/) を扱えます（HuggingFace と愛すべき [candle](https://github.com/huggingface/candle) に感謝）。依存管理も複雑ではなく、グラフィックス・レイアウト・アニメーション・プラグインシステム（WIP）は Web 技術を組み合わせつつ、いいとこ取りしています。
 
 これは、**アイリVTuberが現代のブラウザやデバイスで動作可能である**ことを意味し、モバイルデバイスでも動作します（PWAサポート済み）。これにより、私たち（開発者）はアイリVTuberの力を次のレベルに引き上げるための多くの可能性を持ちつつ、ユーザーがTCP接続や他の非Web技術を必要とする機能を有効にする柔軟性を残しています。例えば、Discordのボイスチャネルに接続したり、MinecraftやFactorioを友達と一緒にプレイすることができます。
 
@@ -141,7 +127,9 @@
 > このプロジェクトの詳細な開発手順については、[CONTRIBUTING.md](../.github/CONTRIBUTING.md)を参照してください
 
 > [!NOTE]
-> デフォルトで `pnpm dev` は Stage Web（ブラウザ版）の開発サーバーを起動します。デスクトップ版を試す場合は、まず [CONTRIBUTING.md](../.github/CONTRIBUTING.md) を読み、環境を正しくセットアップしてください。
+> デフォルトでは `pnpm dev`はステージウェブ（ブラウザ版）の開発サーバーを起動します。
+> デスクトップ版の開発を試したい場合は、[CONTRIBUTING.md](../.github/CONTRIBUTING.md)を読んで環境を正し
+> くセットアップしてください。
 
 ```shell
 pnpm i
@@ -160,25 +148,110 @@ pnpm dev
 pnpm dev:tamagotchi
 ```
 
-たまごっち用の Nix パッケージも用意しています。flakes を有効化した上で、次のように実行できます：
-
-```shell
-nix run github:moeru-ai/airi
-```
-
 ### ドキュメントサイト
 
 ```shell
 pnpm dev:docs
 ```
 
-### リリース
+## Vercel へのデプロイ
 
-`bumpp` 実行後は、`Cargo.toml` のバージョンも更新してください：
+環境変数を設定することで、LLM プロバイダーを事前設定した AIRI を Vercel にデプロイできます。これにより、ユーザーは自分の API キーを設定しなくてもデプロイされたインスタンスを使用できます。
 
-```shell
-npx bumpp --no-commit --no-tag
+### 環境変数
+
+Vercel プロジェクト設定でこれらの環境変数を追加してください：
+
+#### LLM プロバイダー認証情報
+
+| 変数 | 説明 | 例 |
+|------|------|-----|
+| `OPENAI_API_KEY` | OpenAI API キー | `sk-...` |
+| `OPENAI_BASE_URL` | OpenAI ベース URL | `https://api.openai.com/v1/` |
+| `OPENAI_COMPATIBLE_API_KEY` | OpenAI 互換 API キー | `sk-...` |
+| `OPENAI_COMPATIBLE_BASE_URL` | OpenAI 互換ベース URL | `https://your-api.com/v1/` |
+| `OPENROUTER_API_KEY` | OpenRouter API キー | `sk-...` |
+| `ANTHROPIC_API_KEY` | Anthropic Claude API キー | `sk-ant-...` |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini API キー | `AI...` |
+| `DEEPSEEK_API_KEY` | DeepSeek API キー | `sk-...` |
+| `AI302_API_KEY` | 302.AI API キー | `sk-...` |
+| `TOGETHER_API_KEY` | Together.ai API キー | `...` |
+| `XAI_API_KEY` | xAI API キー | `...` |
+| `NOVITA_API_KEY` | Novita API キー | `...` |
+| `FIREWORKS_API_KEY` | Fireworks.ai API キー | `...` |
+| `PERPLEXITY_API_KEY` | Perplexity API キー | `...` |
+| `MISTRAL_API_KEY` | Mistral AI API キー | `...` |
+| `MOONSHOT_API_KEY` | Moonshot AI API キー | `...` |
+| `MODELSCOPE_API_KEY` | ModelScope API キー | `...` |
+
+#### デフォルトプロバイダー選択
+
+| 変数 | 説明 | 例 |
+|------|------|-----|
+| `DEFAULT_CHAT_PROVIDER` | デフォルトチャットプロバイダー ID | `openai` |
+| `DEFAULT_SPEECH_PROVIDER` | デフォルト TTS プロバイダー ID | `openai-audio-speech` |
+| `DEFAULT_TRANSCRIPTION_PROVIDER` | デフォルト STT プロバイダー ID | `openai-audio-transcription` |
+
+#### デフォルトモデル設定（チャット）
+
+| 変数 | 説明 | 例 |
+|------|------|-----|
+| `OPENAI_MODEL` | OpenAI のデフォルトチャットモデル | `gpt-4o-mini` |
+| `OPENAI_COMPATIBLE_MODEL` | OpenAI 互換のデフォルトチャットモデル | `gpt-4o-mini` |
+| `OPENROUTER_MODEL` | OpenRouter のデフォルトチャットモデル | `meta-llama/llama-3.1-405b-instruct` |
+| `ANTHROPIC_MODEL` | Anthropic のデフォルトチャットモデル | `claude-3-opus-20240229` |
+| `GOOGLE_GENERATIVE_AI_MODEL` | Google Gemini のデフォルトチャットモデル | `gemini-1.5-pro-latest` |
+| `DEEPSEEK_MODEL` | DeepSeek のデフォルトチャットモデル | `deepseek-chat` |
+| `AI302_MODEL` | 302.AI のデフォルトチャットモデル | `gpt-4o-mini` |
+| `TOGETHER_MODEL` | Together.ai のデフォルトチャットモデル | `meta-llama/Llama-3-70b-chat-hf` |
+| `XAI_MODEL` | xAI のデフォルトチャットモデル | `grok-beta` |
+| `NOVITA_MODEL` | Novita のデフォルトチャットモデル | `gpt-4o-mini` |
+| `FIREWORKS_MODEL` | Fireworks.ai のデフォルトチャットモデル | `accounts/fireworks/models/llama-v3p1-405b-instruct` |
+| `FEATHERLESS_MODEL` | Featherless のデフォルトチャットモデル | `mistral-small-latest` |
+| `PERPLEXITY_MODEL` | Perplexity のデフォルトチャットモデル | `llama-3.1-sonar-small-128k-online` |
+| `MISTRAL_MODEL` | Mistral のデフォルトチャットモデル | `mistral-large-latest` |
+| `MOONSHOT_MODEL` | Moonshot のデフォルトチャットモデル | `moonshot-v1-32k` |
+| `MODELSCOPE_MODEL` | ModelScope のデフォルトチャットモデル | `qwen2-72b-instruct` |
+| `CLOUDFLARE_WORKERS_AI_MODEL` | Cloudflare Workers AI のデフォルトチャットモデル | `@cf/meta/llama-3-8b-instruct` |
+| `OLLAMA_MODEL` | Ollama のデフォルトチャットモデル | `llama3.1` |
+| `LM_STUDIO_MODEL` | LM Studio のデフォルトチャットモデル | `llama3.1-8b` |
+| `PLAYER2_MODEL` | Player2 のデフォルトチャットモデル | `player2-model` |
+| `VLLM_MODEL` | vLLM プロキシのデフォルトチャットモデル | `llama-2-13b` |
+
+#### デフォルトモデル設定（音声 / 埋め込み）
+
+| 変数 | 説明 | 例 |
+|------|------|-----|
+| `OPENAI_SPEECH_MODEL` | OpenAI のデフォルト音声モデル | `tts-1` |
+| `OPENAI_COMPATIBLE_SPEECH_MODEL` | OpenAI 互換のデフォルト音声モデル | `tts-1-hd` |
+| `PLAYER2_SPEECH_MODEL` | Player2 のデフォルト音声モデル | `player2-voice` |
+| `OLLAMA_EMBEDDING_MODEL` | Ollama のデフォルト埋め込みモデル | `nomic-embed-text` |
+
+#### デフォルトモデル設定（音声認識）
+
+| 変数 | 説明 | 例 |
+|------|------|-----|
+| `OPENAI_TRANSCRIPTION_MODEL` | OpenAI のデフォルト音声認識モデル | `gpt-4o-mini-transcribe` |
+| `OPENAI_COMPATIBLE_TRANSCRIPTION_MODEL` | OpenAI 互換のデフォルト音声認識モデル | `whisper-1` |
+
+### 利用可能なプロバイダー ID
+
+- **チャット**: `openai`, `openai-compatible`, `anthropic`, `google-generative-ai`, `deepseek`, `302-ai`, `together-ai`, `xai`, `novita-ai`, `fireworks-ai`, `perplexity-ai`, `mistral-ai`, `moonshot-ai`, `modelscope`, `openrouter-ai`
+- **音声合成 (TTS)**: `openai-audio-speech`, `openai-compatible-audio-speech`, `elevenlabs`, `microsoft-speech`
+- **音声認識 (STT)**: `openai-audio-transcription`, `openai-compatible-audio-transcription`
+
+### 設定例
+
+```env
+OPENAI_API_KEY=sk-proj-xxxxx
+OPENAI_BASE_URL=https://api.openai.com/v1/
+OPENAI_MODEL=gpt-4o-mini
+DEFAULT_CHAT_PROVIDER=openai
+DEFAULT_SPEECH_PROVIDER=openai-audio-speech
+DEFAULT_TRANSCRIPTION_PROVIDER=openai-audio-transcription
 ```
+
+これらの変数を設定すると、ユーザーがデプロイにアクセスした際にプロバイダーが自動的に設定され選択されます。
 
 ## サポートされているLLM APIプロバイダー（[xsai](https://github.com/moeru-ai/xsai)によって提供）
 
@@ -216,22 +289,21 @@ npx bumpp --no-commit --no-tag
 ## このプロジェクトから生まれたサブプロジェクト
 
 - [Awesome AI VTuber](https://github.com/proj-airi/awesome-ai-vtuber): AI VTuberと関連プロジェクトのキュレーションリスト
-- [`unspeech`](https://github.com/moeru-ai/unspeech): `/audio/transcriptions` と `/audio/speech` のユニバーサルエンドポイントプロキシ、LiteLLM 的に任意の ASR/TTS に対応
-- [`hfup`](https://github.com/moeru-ai/hfup): HuggingFace Spaces へのデプロイとバンドルを支援するツール
-- [`xsai-transformers`](https://github.com/moeru-ai/xsai-transformers): [xsAI](https://github.com/moeru-ai/xsai)向けの実験的な [🤗 Transformers.js](https://github.com/huggingface/transformers.js) プロバイダー
-- [WebAI: Realtime Voice Chat](https://github.com/proj-airi/webai-realtime-voice-chat): VAD + STT + LLM + TTS で ChatGPT のリアルタイム音声をゼロから実装する完全例
-- [`@proj-airi/drizzle-duckdb-wasm`](https://github.com/moeru-ai/airi/tree/main/packages/drizzle-duckdb-wasm/README.md): DuckDB WASM の Drizzle ORM ドライバー
-- [`@proj-airi/duckdb-wasm`](https://github.com/moeru-ai/airi/tree/main/packages/duckdb-wasm/README.md): 使いやすい `@duckdb/duckdb-wasm` ラッパー
-- [`tauri-plugin-mcp`](https://github.com/moeru-ai/airi/blob/main/crates/tauri-plugin-mcp/README.md): MCPサーバーとやり取りするための Tauri プラグイン
-- [AIRI Factorio](https://github.com/moeru-ai/airi-factorio): AIRI が Factorio をプレイできるようにする
-- [Factorio RCON API](https://github.com/nekomeowww/factorio-rcon-api): Factorio ヘッドレスサーバーコンソールの RESTful API ラッパー
-- [`autorio`](https://github.com/moeru-ai/airi-factorio/tree/main/packages/autorio): Factorio 自動化ライブラリ
-- [`tstl-plugin-reload-factorio-mod`](https://github.com/moeru-ai/airi-factorio/tree/main/packages/tstl-plugin-reload-factorio-mod): Factorio モッド開発時のリロードを支援
-- [Velin](https://github.com/luoling8192/velin): Vue SFC と Markdown で管理しやすいプロンプトを書く仕組み
-- [`demodel`](https://github.com/moeru-ai/demodel): さまざまな推論ランタイム/ダウンローダーでモデルやデータセット取得を加速
-- [`inventory`](https://github.com/moeru-ai/inventory): モデルカタログとデフォルトプロバイダー設定のバックエンドサービス
-- [MCP Launcher](https://github.com/moeru-ai/mcp-launcher): すべての MCP サーバーを簡単に扱える MCP ビルダー＆ランチャー、モデル界の Ollama 的存在
-- [🥺 SAD](https://github.com/moeru-ai/sad): 自己ホストやブラウザで動かす LLM のドキュメントとノート
+- [`unspeech`](https://github.com/moeru-ai/unspeech): `/audio/transcriptions`と`/audio/speech`のためのユニバーサルエンドポイントプロキシサーバー、LiteLLMのように、任意のASRとTTSに対応
+- [`hfup`](https://github.com/moeru-ai/hfup): HuggingFace Spacesへのデプロイとバンドルを支援するツール
+- [`xsai-transformers`](https://github.com/moeru-ai/xsai-transformers): [xsAI](https://github.com/moeru-ai/xsai)のための実験的な[🤗 Transformers.js](https://github.com/huggingface/transformers.js)プロバイダー
+- [WebAI: Realtime Voice Chat](https://github.com/proj-airi/webai-realtime-voice-chat): VAD + STT + LLM + TTSを使用してChatGPTのリアルタイム音声をゼロから実装する完全な例
+- [`@proj-airi/drizzle-duckdb-wasm`](https://github.com/moeru-ai/airi/tree/main/packages/drizzle-duckdb-wasm/README.md): DuckDB WASMのDrizzle ORMドライバー
+- [`@proj-airi/duckdb-wasm`](https://github.com/moeru-ai/airi/tree/main/packages/duckdb-wasm/README.md): `@duckdb/duckdb-wasm`の使いやすいラッパー
+- [AIRI Factorio](https://github.com/moeru-ai/airi-factorio): AIRIがFactorioをプレイできるようにする
+- [Factorio RCON API](https://github.com/nekomeowww/factorio-rcon-api): FactorioヘッドレスサーバーコンソールのRESTful APIラッパー
+- [`autorio`](https://github.com/moeru-ai/airi-factorio/tree/main/packages/autorio): Factorio自動化ライブラリ
+- [`tstl-plugin-reload-factorio-mod`](https://github.com/moeru-ai/airi-factorio/tree/main/packages/tstl-plugin-reload-factorio-mod): Factorioモッドの開発時にリロードをサポート
+- [Velin](https://github.com/luoling8192/velin): Vue SFCとMarkdownを使用してLLMのための管理しやすい状態のプロンプトを書く
+- [`demodel`](https://github.com/moeru-ai/demodel): さまざまな推論ランタイムからモデルやデータセットをデプロイ、バンドルするためのツール
+- [`inventory`](https://github.com/moeru-ai/inventory): 中央集権的なモデルカタログとデフォルトプロバイダー設定のバックエンドサービス
+- [MCP Launcher](https://github.com/moeru-ai/mcp-launcher): すべての可能なMCPサーバーのための簡単に使用できるMCPビルダー＆ランチャー、Ollamaのようにモデルのためのもの！
+- [🥺 SAD](https://github.com/moeru-ai/sad): 自己ホストおよびブラウザで実行されるLLMのためのドキュメントとノート
 
 ```mermaid
 %%{ init: { 'flowchart': { 'curve': 'catmullRom' } } }%%
@@ -341,7 +413,6 @@ flowchart TD
 
 - https://clips.twitch.tv/WanderingCaringDeerDxCat-Qt55xtiGDSoNmDDr https://www.youtube.com/watch?v=8Giv5mupJNE
 - https://clips.twitch.tv/TriangularAthleticBunnySoonerLater-SXpBk1dFso21VcWD
-- https://www.youtube.com/@NOWA_Mirai
 
 ## プロジェクトのステータス
 
@@ -349,10 +420,10 @@ flowchart TD
 
 ## 謝辞
 
-- [Reka UI](https://github.com/unovue/reka-ui): ドキュメントサイトのデザイン。新しいランディングページもここをベースに、膨大な UI コンポーネントに感謝。（shadcn-vue は headless として Reka UI を採用、ぜひチェックを）
+- [Reka UI](https://github.com/unovue/reka-ui): ドキュメントサイトのデザイン、新しいランディングページはこれに基づいており、また膨大な量のUIコンポーネントを実装してくれたことに感謝します。（shadcn-vueはReka UIをヘッドレスとして使用していますので、ぜひチェックしてください！）
 - [pixiv/ChatVRM](https://github.com/pixiv/ChatVRM)
 - [josephrocca/ChatVRM-js: A JS conversion/adaptation of parts of the ChatVRM (TypeScript) code for standalone use in OpenCharacters and elsewhere](https://github.com/josephrocca/ChatVRM-js)
-- UI とスタイルは [Cookard](https://store.steampowered.com/app/2919650/Cookard/)、[UNBEATABLE](https://store.steampowered.com/app/2240620/UNBEATABLE/)、[Sensei! I like you so much!](https://store.steampowered.com/app/2957700/_/)、[Ayame by Mercedes Bazan](https://dribbble.com/shots/22157656-Ayame)、[Wish by Mercedes Bazan](https://dribbble.com/shots/24501019-Wish) などにインスパイアされています
+- UIとスタイルのデザインは、[Cookard](https://store.steampowered.com/app/2919650/Cookard/)、[UNBEATABLE](https://store.steampowered.com/app/2240620/UNBEATABLE/)、および[Sensei! I like you so much!](https://store.steampowered.com/app/2957700/_/)の作品、[Ayame by Mercedes Bazan](https://dribbble.com/shots/22157656-Ayame)と[Wish by Mercedes Bazan](https://dribbble.com/shots/24501019-Wish)のアートワークに触発されました
 - [mallorbc/whisper_mic](https://github.com/mallorbc/whisper_mic)
 - [`xsai`](https://github.com/moeru-ai/xsai): LLMやモデルと対話するための多くのパッケージを実装しました。 [Vercel AI SDK](https://sdk.vercel.ai/)のように小さなものです。
 

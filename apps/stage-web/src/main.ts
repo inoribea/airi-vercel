@@ -5,6 +5,7 @@ import Tres from '@tresjs/core'
 import NProgress from 'nprogress'
 
 import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
+import { inject } from '@vercel/analytics'
 import { MotionPlugin } from '@vueuse/motion'
 import { createPinia } from 'pinia'
 import { setupLayouts } from 'virtual:generated-layouts'
@@ -22,8 +23,11 @@ import './modules/posthog'
 import '@proj-airi/font-cjkfonts-allseto/index.css'
 import '@proj-airi/font-xiaolai/index.css'
 import '@unocss/reset/tailwind.css'
+import './styles/fonts.css'
 import './styles/main.css'
 import 'uno.css'
+
+inject() // Enable Vercel Web Analytics
 
 const pinia = createPinia()
 // TODO: vite-plugin-vue-layouts is long deprecated, replace with another layout solution

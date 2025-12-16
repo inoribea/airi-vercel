@@ -1,43 +1,44 @@
-import type { ContextMessage, WebSocketBaseEvent, WebSocketEvent, WebSocketEvents } from '@proj-airi/server-sdk'
+import type { WebSocketEvent } from '@proj-airi/server-sdk'
 
 import { Client } from '@proj-airi/server-sdk'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const useModsServerChannelStore = defineStore('mods:channels:proj-airi:server', () => {
+export const useModsChannelServerStore = defineStore('mods:channels:proj-airi:server', () => {
   const connected = ref(false)
   const client = ref<Client>()
-  const initializing = ref<Promise<void> | null>(null)
 
   const pendingSend = ref<Array<WebSocketEvent>>([])
 
-  function initialize(options?: { token?: string, possibleEvents?: Array<keyof WebSocketEvents> }) {
-    if (connected.value && client.value)
-      return Promise.resolve()
-    if (initializing.value)
-      return initializing.value
+  function initialize(options?: { token?: string }) {
+    return new Promise<void>((resolve, reject) => {
+      const disableFlag = [
+        import.meta.env?.VITE_DISABLE_WEBSOCKET,
+        import.meta.env?.DISABLE_WEBSOCKET,
+      ].find(value => typeof value === 'string')
 
-    const possibleEvents = Array.from(new Set<keyof WebSocketEvents>([
-      'ui:configure',
-      'context:update',
-      ...(options?.possibleEvents ?? []),
-    ]))
+      const wsDisabled = typeof disableFlag === 'string'
+        ? disableFlag.toLowerCase() === 'true'
+        : false
 
-    initializing.value = new Promise<void>((resolve, reject) => {
+      if (wsDisabled) {
+        connected.value = false
+        client.value = undefined
+        pendingSend.value = []
+        resolve()
+        return
+      }
+
       client.value = new Client({
         name: 'proj-airi:ui:stage',
         url: import.meta.env.VITE_AIRI_WS_URL || 'ws://localhost:6121/ws',
         token: options?.token,
-        possibleEvents,
+        possibleEvents: [
+          'ui:configure',
+          'module:authenticated',
+        ],
         onError: (error) => {
-          client.value = undefined
-          connected.value = false
-          initializing.value = null
           reject(error)
-        },
-        onClose: () => {
-          connected.value = false
-          initializing.value = null
         },
       })
 
@@ -45,30 +46,18 @@ export const useModsServerChannelStore = defineStore('mods:channels:proj-airi:se
         if (event.data.authenticated) {
           connected.value = true
           flush()
-          initializeListeners()
           resolve()
-          return
         }
-
-        connected.value = false
       })
     })
-
-    return initializing.value
-  }
-
-  function initializeListeners() {
-    if (!client.value)
-      // No-op for now; keep placeholder for future shared listeners.
-      // eslint-disable-next-line no-useless-return
-      return
   }
 
   function send(data: WebSocketEvent) {
-    if (!client.value && !initializing.value)
-      void initialize()
+    if (!client.value) {
+      return
+    }
 
-    if (client.value && connected.value) {
+    if (connected.value) {
       client.value.send(data)
     }
     else {
@@ -77,7 +66,11 @@ export const useModsServerChannelStore = defineStore('mods:channels:proj-airi:se
   }
 
   function flush() {
-    if (client.value && connected.value) {
+    if (!client.value) {
+      return
+    }
+
+    if (connected.value) {
       for (const update of pendingSend.value) {
         client.value.send(update)
       }
@@ -86,31 +79,12 @@ export const useModsServerChannelStore = defineStore('mods:channels:proj-airi:se
     }
   }
 
-  function onContextUpdate(callback: (event: WebSocketBaseEvent<'context:update', ContextMessage>) => void | Promise<void>) {
-    if (!client.value && !initializing.value)
-      void initialize()
-
-    client.value?.onEvent('context:update', callback as any)
-
-    return () => {
-      client.value?.offEvent('context:update', callback as any)
-    }
-  }
-
-  function sendContextUpdate(message: ContextMessage) {
-    send({
-      type: 'context:update',
-      data: message,
-    })
-  }
-
   function dispose() {
     flush()
 
     client.value?.close()
     connected.value = false
     client.value = undefined
-    initializing.value = null
   }
 
   return {
@@ -118,8 +92,6 @@ export const useModsServerChannelStore = defineStore('mods:channels:proj-airi:se
 
     initialize,
     send,
-    sendContextUpdate,
-    onContextUpdate,
     dispose,
   }
 })

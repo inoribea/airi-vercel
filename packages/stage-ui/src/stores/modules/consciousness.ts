@@ -1,18 +1,44 @@
-import { defineStore } from 'pinia'
-import { computed } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
+import { defineStore, storeToRefs } from 'pinia'
+import { computed, ref, watch } from 'vue'
 
-import { createResettableLocalStorage, createResettableRef } from '../../utils/resettable'
 import { useProvidersStore } from '../providers'
 
 export const useConsciousnessStore = defineStore('consciousness', () => {
   const providersStore = useProvidersStore()
+  const { configuredProviders } = storeToRefs(providersStore)
 
   // State
-  const [activeProvider, resetActiveProvider] = createResettableLocalStorage('settings/consciousness/active-provider', '')
-  const [activeModel, resetActiveModel] = createResettableLocalStorage('settings/consciousness/active-model', '')
-  const [activeCustomModelName, resetActiveCustomModelName] = createResettableLocalStorage('settings/consciousness/active-custom-model', '')
-  const [expandedDescriptions, resetExpandedDescriptions] = createResettableRef<Record<string, boolean>>({})
-  const [modelSearchQuery, resetModelSearchQuery] = createResettableRef('')
+  const activeProvider = useLocalStorage('settings/consciousness/active-provider', '')
+  const activeModel = useLocalStorage('settings/consciousness/active-model', '')
+  const activeCustomModelName = useLocalStorage('settings/consciousness/active-custom-model', '')
+  const expandedDescriptions = ref<Record<string, boolean>>({})
+  const modelSearchQuery = ref('')
+
+  const defaultChatProvider = (import.meta.env.DEFAULT_CHAT_PROVIDER || 'openai').trim()
+
+  if (
+    defaultChatProvider
+    && Object.prototype.hasOwnProperty.call(providersStore.providerMetadata, defaultChatProvider)
+  ) {
+    watch(
+      () => configuredProviders.value[defaultChatProvider],
+      (isConfigured) => {
+        if (isConfigured && !activeProvider.value)
+          activeProvider.value = defaultChatProvider
+      },
+      { immediate: true },
+    )
+  }
+
+  watch(activeProvider, (provider) => {
+    if (!provider)
+      return
+
+    const envModel = providersStore.getEnvModelForProvider?.(provider)
+    if (envModel && (!activeModel.value || activeModel.value.trim().length === 0))
+      activeModel.value = envModel
+  }, { immediate: true })
 
   // Computed properties
   const supportsModelListing = computed(() => {
@@ -45,10 +71,10 @@ export const useConsciousnessStore = defineStore('consciousness', () => {
   })
 
   function resetModelSelection() {
-    resetActiveModel()
-    resetActiveCustomModelName()
-    resetExpandedDescriptions()
-    resetModelSearchQuery()
+    activeModel.value = ''
+    activeCustomModelName.value = ''
+    expandedDescriptions.value = {}
+    modelSearchQuery.value = ''
   }
 
   async function loadModelsForProvider(provider: string) {
@@ -68,11 +94,6 @@ export const useConsciousnessStore = defineStore('consciousness', () => {
   const configured = computed(() => {
     return !!activeProvider.value && !!activeModel.value
   })
-
-  function resetState() {
-    resetActiveProvider()
-    resetModelSelection()
-  }
 
   return {
     // State
@@ -94,6 +115,5 @@ export const useConsciousnessStore = defineStore('consciousness', () => {
     resetModelSelection,
     loadModelsForProvider,
     getModelsForProvider,
-    resetState,
   }
 })

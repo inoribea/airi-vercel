@@ -5,24 +5,134 @@ import VueI18n from '@intlify/unplugin-vue-i18n/vite'
 import Vue from '@vitejs/plugin-vue'
 import Unocss from 'unocss/vite'
 import Info from 'unplugin-info/vite'
+import VueMacros from 'unplugin-vue-macros/vite'
 import VueRouter from 'unplugin-vue-router/vite'
 import Yaml from 'unplugin-yaml/vite'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import Layouts from 'vite-plugin-vue-layouts'
-import VueMacros from 'vue-macros/vite'
 
 import { Download } from '@proj-airi/unplugin-fetch/vite'
 import { DownloadLive2DSDK } from '@proj-airi/unplugin-live2d-sdk/vite'
-import { createS3Provider, WarpDrivePlugin } from '@proj-airi/vite-plugin-warpdrive'
 import { templateCompilerOptions } from '@tresjs/core'
 import { LFS, SpaceCard } from 'hfup/vite'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const stageUIAssetsRoot = resolve(join(import.meta.dirname, '..', '..', 'packages', 'stage-ui', 'src', 'assets'))
-const sharedCacheDir = resolve(join(import.meta.dirname, '..', '..', '.cache'))
+const providerEnvKeys = [
+  'OPENAI_API_KEY',
+  'OPENAI_BASE_URL',
+  'OPENAI_MODEL',
+  'OPENAI_COMPATIBLE_API_KEY',
+  'OPENAI_COMPATIBLE_BASE_URL',
+  'OPENAI_COMPATIBLE_MODEL',
+  'OPENAI_SPEECH_MODEL',
+  'OPENAI_COMPATIBLE_SPEECH_MODEL',
+  'OPENAI_TRANSCRIPTION_MODEL',
+  'OPENAI_COMPATIBLE_TRANSCRIPTION_MODEL',
+  'OPENROUTER_API_KEY',
+  'OPENROUTER_BASE_URL',
+  'OPENROUTER_MODEL',
+  'ANTHROPIC_API_KEY',
+  'ANTHROPIC_BASE_URL',
+  'ANTHROPIC_MODEL',
+  'GOOGLE_GENERATIVE_AI_API_KEY',
+  'GOOGLE_GENERATIVE_AI_BASE_URL',
+  'GOOGLE_GENERATIVE_AI_MODEL',
+  'DEEPSEEK_API_KEY',
+  'DEEPSEEK_BASE_URL',
+  'DEEPSEEK_MODEL',
+  'AI302_API_KEY',
+  'AI302_BASE_URL',
+  'AI302_MODEL',
+  'TOGETHER_API_KEY',
+  'TOGETHER_BASE_URL',
+  'TOGETHER_MODEL',
+  'XAI_API_KEY',
+  'XAI_BASE_URL',
+  'XAI_MODEL',
+  'NOVITA_API_KEY',
+  'NOVITA_BASE_URL',
+  'NOVITA_MODEL',
+  'FIREWORKS_API_KEY',
+  'FIREWORKS_BASE_URL',
+  'FIREWORKS_MODEL',
+  'FEATHERLESS_API_KEY',
+  'FEATHERLESS_BASE_URL',
+  'FEATHERLESS_MODEL',
+  'PERPLEXITY_API_KEY',
+  'PERPLEXITY_BASE_URL',
+  'PERPLEXITY_MODEL',
+  'MISTRAL_API_KEY',
+  'MISTRAL_BASE_URL',
+  'MISTRAL_MODEL',
+  'MOONSHOT_API_KEY',
+  'MOONSHOT_BASE_URL',
+  'MOONSHOT_MODEL',
+  'MODELSCOPE_API_KEY',
+  'MODELSCOPE_BASE_URL',
+  'MODELSCOPE_MODEL',
+  'ALIBABA_CLOUD_API_KEY',
+  'ALIBABA_CLOUD_BASE_URL',
+  'ALIBABA_CLOUD_MODEL',
+  'VOLCENGINE_API_KEY',
+  'VOLCENGINE_BASE_URL',
+  'VOLCENGINE_MODEL',
+  'VOLCENGINE_APP_ID',
+  'CLOUDFLARE_WORKERS_AI_API_KEY',
+  'CLOUDFLARE_WORKERS_AI_MODEL',
+  'CLOUDFLARE_ACCOUNT_ID',
+  'CLOUDFLARE_API_TOKEN',
+  'OLLAMA_MODEL',
+  'OLLAMA_EMBEDDING_MODEL',
+  'LM_STUDIO_MODEL',
+  'PLAYER2_MODEL',
+  'PLAYER2_SPEECH_MODEL',
+  'VLLM_MODEL',
+  'VITE_AIRI_WS_URL',
+  'DEFAULT_CHAT_PROVIDER',
+  'DEFAULT_SPEECH_PROVIDER',
+  'DEFAULT_TRANSCRIPTION_PROVIDER',
+  'MEMORY_PROVIDER',
+  'SHORT_TERM_MEMORY_PROVIDER',
+  'SHORT_TERM_MEMORY_MAX_MESSAGES',
+  'SHORT_TERM_MEMORY_TTL_SECONDS',
+  'MEMORY_NAMESPACE',
+  'LONG_TERM_MEMORY_PROVIDER',
+  'MEMORY_LONG_TERM_PROVIDER',
+  'MEMORY_EMBEDDING_PROVIDER',
+  'MEMORY_EMBEDDING_API_KEY',
+  'MEMORY_EMBEDDING_BASE_URL',
+  'MEMORY_EMBEDDING_ACCOUNT_ID',
+  'MEMORY_EMBEDDING_API_TOKEN',
+  'MEMORY_EMBEDDING_MODEL',
+  'DATABASE_URL',
+  'POSTGRES_URL',
+  'MEMORY_LONG_TERM_CONNECTION_STRING',
+  'POSTGRES_HOST',
+  'POSTGRES_PORT',
+  'POSTGRES_DATABASE',
+  'POSTGRES_DB',
+  'POSTGRES_USER',
+  'POSTGRES_PASSWORD',
+  'MEMORY_LONG_TERM_ENABLED',
+  'MEMORY_LONG_TERM_PROVIDER',
+  'UPSTASH_KV_REST_API_URL',
+  'UPSTASH_KV_REST_API_TOKEN',
+  'UPSTASH_KV_REST_URL',
+  'UPSTASH_KV_REST_TOKEN',
+  'UPSTASH_KV_URL',
+  'UPSTASH_REDIS_URL',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+]
+
+const providerEnvDefine = providerEnvKeys.reduce<Record<string, string>>((acc, key) => {
+  acc[`import.meta.env.${key}`] = JSON.stringify(env[key] ?? '')
+  return acc
+}, {})
 
 export default defineConfig({
+  define: providerEnvDefine,
   optimizeDeps: {
     exclude: [
       // Internal Packages
@@ -56,7 +166,7 @@ export default defineConfig({
       '@proj-airi/i18n': resolve(join(import.meta.dirname, '..', '..', 'packages', 'i18n', 'src')),
       '@proj-airi/stage-ui': resolve(join(import.meta.dirname, '..', '..', 'packages', 'stage-ui', 'src')),
       '@proj-airi/stage-pages': resolve(join(import.meta.dirname, '..', '..', 'packages', 'stage-pages', 'src')),
-      '@proj-airi/stage-shared': resolve(join(import.meta.dirname, '..', '..', 'packages', 'stage-shared', 'src')),
+      'onnxruntime-node': 'onnxruntime-web',
     },
   },
   server: {
@@ -67,10 +177,6 @@ export default defineConfig({
       ],
     },
   },
-  build: {
-    sourcemap: true,
-  },
-
   plugins: [
     Info(),
 
@@ -141,6 +247,9 @@ export default defineConfig({
           },
           workbox: {
             maximumFileSizeToCacheInBytes: 64 * 1024 * 1024,
+            clientsClaim: true,
+            skipWaiting: true,
+            cleanupOutdatedCaches: true,
             navigateFallbackDenylist: [
               /^\/docs\//,
               /^\/ui\//,
@@ -161,10 +270,10 @@ export default defineConfig({
     VueDevTools(),
 
     DownloadLive2DSDK(),
-    Download('https://dist.ayaka.moe/live2d-models/hiyori_free_zh.zip', 'hiyori_free_zh.zip', 'live2d/models', { parentDir: stageUIAssetsRoot, cacheDir: sharedCacheDir }),
-    Download('https://dist.ayaka.moe/live2d-models/hiyori_pro_zh.zip', 'hiyori_pro_zh.zip', 'live2d/models', { parentDir: stageUIAssetsRoot, cacheDir: sharedCacheDir }),
-    Download('https://dist.ayaka.moe/vrm-models/VRoid-Hub/AvatarSample-A/AvatarSample_A.vrm', 'AvatarSample_A.vrm', 'vrm/models/AvatarSample-A', { parentDir: stageUIAssetsRoot, cacheDir: sharedCacheDir }),
-    Download('https://dist.ayaka.moe/vrm-models/VRoid-Hub/AvatarSample-B/AvatarSample_B.vrm', 'AvatarSample_B.vrm', 'vrm/models/AvatarSample-B', { parentDir: stageUIAssetsRoot, cacheDir: sharedCacheDir }),
+    Download('https://dist.ayaka.moe/live2d-models/hiyori_free_zh.zip', 'hiyori_free_zh.zip', 'assets/live2d/models'),
+    Download('https://dist.ayaka.moe/live2d-models/hiyori_pro_zh.zip', 'hiyori_pro_zh.zip', 'assets/live2d/models'),
+    Download('https://dist.ayaka.moe/vrm-models/VRoid-Hub/AvatarSample-A/AvatarSample_A.vrm', 'AvatarSample_A.vrm', 'assets/vrm/models/AvatarSample-A'),
+    Download('https://dist.ayaka.moe/vrm-models/VRoid-Hub/AvatarSample-B/AvatarSample_B.vrm', 'AvatarSample_B.vrm', 'assets/vrm/models/AvatarSample-B'),
 
     // HuggingFace Spaces
     LFS({ root: cwd(), extraGlobs: ['*.vrm', '*.vrma', '*.hdr', '*.cmo3', '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.bmp', '*.ttf'] }),
@@ -183,48 +292,5 @@ export default defineConfig({
       ],
       short_description: 'AI driven VTuber & Companion, supports Live2D and VRM.',
     }),
-
-    // For the following example assets:
-    //
-    // dist/assets/ort-wasm-simd-threaded.jsep-B0T3yYHD.wasm                21,596.01 kB │ gzip: 5,121.95 kB
-    // dist/assets/XiaolaiSC-Regular-SNWuh554.ttf                           22,183.94 kB
-    // dist/assets/cjkFonts_allseto_v1.11-ByBdljxl.ttf                      31,337.14 kB
-    // dist/assets/duckdb-coi-CSr8FQO4.wasm                                 32,320.49 kB │ gzip: 7,194.65 kB
-    // dist/assets/duckdb-eh-BJOC5S4x.wasm                                  32,604.02 kB │ gzip: 7,133.37 kB
-    // dist/assets/duckdb-mvp-8HYqhb4i.wasm                                 37,345.64 kB │ gzip: 8,099.69 kB
-    //
-    // they are too large to be able to put into deployments like Cloudflare Workers or Pages,
-    // we need to upload them to external storage and use renderBuiltUrl to rewrite their URLs.
-    ...((!env.S3_ENDPOINT || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY)
-      ? []
-      : [
-          WarpDrivePlugin({
-            prefix: env.STAGE_WEB_WARP_DRIVE_PREFIX || 'proj-airi/stage-web/main/',
-            include: [/\.wasm$/i, /\.ttf$/i, /\.vrm$/i, /\.zip$/i], // in existing assets, wasm, ttf, vrm files are the largest ones
-            manifest: true,
-            clean: false,
-            contentTypeBy: (filename: string) => {
-              if (filename.endsWith('.wasm')) {
-                return 'application/wasm'
-              }
-              if (filename.endsWith('.ttf')) {
-                return 'font/ttf'
-              }
-              if (filename.endsWith('.vrm')) {
-                return 'application/octet-stream'
-              }
-              if (filename.endsWith('.zip')) {
-                return 'application/zip'
-              }
-            },
-            provider: createS3Provider({
-              endpoint: env.S3_ENDPOINT,
-              accessKeyId: env.S3_ACCESS_KEY_ID,
-              secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-              region: env.S3_REGION,
-              publicBaseUrl: env.WARP_DRIVE_PUBLIC_BASE ?? env.S3_ENDPOINT,
-            }),
-          }),
-        ]),
   ],
 })
