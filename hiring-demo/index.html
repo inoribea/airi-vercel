@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端开发能力测试项目</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            color: #34495e;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.3rem;
+        }
+
+        ul {
+            margin: 1rem 0;
+        }
+
+        li {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        li:before {
+            content: '•';
+            color: #3498db;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .skill-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .skill-card h4 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .task-card {
+            background: white;
+            color: #333;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-card h4 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: #2c3e50;
+        }
+
+        .evaluation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .evaluation-item {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .evaluation-item strong {
+            display: block;
+            color: #1976d2;
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem 0;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .section {
+                padding: 1.5rem;
+            }
+
+            .skills-grid,
+            .task-cards,
+            .evaluation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>前端开发能力测试项目</h1>
+            <p class="subtitle">基于AIRI虚拟角色平台的半完成项目</p>
+        </header>
+
+        <section class="section">
+            <h2>项目概述</h2>
+            <p>这是一个用于测试前端开发者能力的半完成项目。项目基于AIRI虚拟角色平台，包含一些已完成的功能和一些需要实现的功能。</p>
+        </section>
+
+        <section class="section">
+            <h2>技术栈</h2>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <h4>Vue 3</h4>
+                    <p>组合式API、响应式系统</p>
+                </div>
+                <div class="skill-card">
+                    <h4>TypeScript</h4>
+                    <p>类型安全、接口定义</p>
+                </div>
+                <div class="skill-card">
+                    <h4>Vite</h4>
+                    <p>快速构建、开发服务器</p>
+                </div>
+                <div class="skill-card">
+                    <h4>UnoCSS</h4>
+                    <p>原子化CSS、响应式设计</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>测试任务</h2>
+            <p>请完成以下功能开发：</p>
+            <div class="task-cards">
+                <div class="task-card">
+                    <h4>1. 消息系统界面</h4>
+                    <p>实现一个聊天界面，支持文本消息和表情符号</p>
+                </div>
+                <div class="task-card">
+                    <h4>2. 记忆系统配置</h4>
+                    <p>实现一个设置页面，让用户配置记忆系统参数</p>
+                </div>
+                <div class="task-card">
+                    <h4>3. 多模态输入</h4>
+                    <p>实现语音和图像输入功能</p>
+                </div>
+            </div>
+            <div class="task-cards">
+                <div class="task-card">
+                    <h4>4. 实时状态显示</h4>
+                    <p>显示AI助手的状态（在线、思考、响应等）</p>
+                </div>
+                <div class="task-card">
+                    <h4>5. 用户偏好设置</h4>
+                    <p>实现主题切换和个人设置保存</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>开发要求</h2>
+            <ul>
+                <li><strong>代码质量</strong>：结构清晰、可维护性强</li>
+                <li><strong>兼容性</strong>：与现有功能的兼容性</li>
+                <li><strong>用户体验</strong>：直观的界面和流畅的交互</li>
+                <li><strong>响应式设计</strong>：适配不同屏幕尺寸</li>
+                <li><strong>类型安全</strong>：完整的TypeScript类型定义</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>评分标准</h2>
+            <div class="evaluation-grid">
+                <div class="evaluation-item">
+                    <strong>40%</strong>
+                    <div>功能实现</div>
+                    <div>功能完整性、交互流畅性</div>
+                </div>
+                <div class="evaluation-item">
+                    <strong>30%</strong>
+                    <div>代码质量</div>
+                    <div>代码结构、可维护性</div>
+                </div>
+                <div class="evaluation-item">
+                    <strong>20%</strong>
+                    <div>UI/UX设计</div>
+                    <div>用户界面、用户体验</div>
+                </div>
+                <div class="evaluation-item">
+                    <strong>10%</strong>
+                    <div>技术运用</div>
+                    <div>Vue 3特性、状态管理</div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>© 2025 前端开发能力测试项目. 用于评估前端开发技能.</p>
+        </footer>
+    </div>
+</body>
+</html>

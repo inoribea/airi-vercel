@@ -1,0 +1,39 @@
+{
+  "name": "@proj-airi/frontend-test",
+  "type": "module",
+  "version": "0.8.0-beta.3",
+  "private": true,
+  "packageManager": "pnpm@10.25.0",
+  "description": "Frontend developer test project based on AIRI platform",
+  "author": {
+    "name": "Frontend Test Project",
+    "email": "test@example.com",
+    "url": "https://example.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "pnpm -r -F @proj-airi/stage-web dev",
+    "dev:web": "pnpm -rF @proj-airi/stage-web run dev",
+    "build": "turbo run build -F=\"./packages/*\" -F=\"./apps/*\"",
+    "build:web": "turbo run build -F @proj-airi/stage-web",
+    "lint": "eslint . --ext .vue,.ts,.js,.jsx,.tsx --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vueuse/core": "^12.5.0",
+    "vue": "^3.5.13",
+    "pinia": "^2.3.1"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^3.12.1",
+    "eslint": "^9.23.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.5",
+    "vue-tsc": "^2.2.0",
+    "turbo": "^2.6.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
