@@ -9,8 +9,9 @@
     "@vercel/kv": "^1.0.1",
     "@vercel/node": "^5.3.26",
     "@vercel/postgres": "^0.8.0",
-    "openai": "^4.95.1",
-    "pg": "^8.16.3"
+    "@xsai/embed": "catalog:",
+    "pg": "^8.16.3",
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@types/node": "^24.6.2",

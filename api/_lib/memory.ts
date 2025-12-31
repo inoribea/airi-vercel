@@ -6,13 +6,15 @@ import type { QueryResult, QueryResultRow } from 'pg'
 
 import { randomUUID } from 'node:crypto'
 
-import OpenAI from 'openai'
-
 import { QdrantClient } from '@qdrant/js-client-rest'
 import { Redis } from '@upstash/redis'
 import { kv as vercelKv } from '@vercel/kv'
 import { sql } from '@vercel/postgres'
+import { embed } from '@xsai/embed'
 import { Pool } from 'pg'
+
+// Constants
+const DEFAULT_OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small'
 
 interface SqlQueryExecutor {
   query: <T extends QueryResultRow = QueryResultRow>(text: string, params?: unknown[]) => Promise<QueryResult<T>>
@@ -83,7 +85,6 @@ export interface MemorySearchResult {
 let currentConfig: MemoryConfiguration | null = null
 let redisClient: Redis | null = null
 let qdrantClient: QdrantClient | null = null
-let openaiClient: OpenAI | null = null
 let externalPostgresPool: Pool | null = null
 let externalPostgresPoolConnectionString: string | null = null
 
@@ -99,10 +100,9 @@ export function setConfiguration(config: MemoryConfiguration): void {
   // Reset clients when config changes
   redisClient = null
   qdrantClient = null
-  openaiClient = null
 
   if (externalPostgresPool) {
-    externalPostgresPool.end().catch(() => {})
+    externalPostgresPool.end().catch(err => console.error('Failed to close external Postgres pool:', err))
     externalPostgresPool = null
     externalPostgresPoolConnectionString = null
   }
@@ -250,36 +250,7 @@ function getQdrantClient(): QdrantClient {
   return qdrantClient
 }
 
-// Helper to get or create OpenAI client
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const config = getConfiguration()
-    const embedding = config.longTerm?.embedding
-
-    if (!embedding || embedding.provider === 'cloudflare') {
-      throw new Error('OpenAI configuration is missing')
-    }
-
-    const openaiConfig = embedding.openai ?? {
-      apiKey: embedding.apiKey ?? '',
-      baseURL: embedding.baseUrl ?? (embedding as Record<string, unknown>).baseURL as string | undefined,
-    }
-
-    if (!openaiConfig.apiKey) {
-      throw new Error('OpenAI API key is missing')
-    }
-
-    embedding.openai = openaiConfig
-
-    openaiClient = new OpenAI({
-      apiKey: openaiConfig.apiKey,
-      baseURL: openaiConfig.baseURL,
-    })
-  }
-  return openaiClient
-}
-
-// Generate embedding vector
+// Generate embedding vector using xsai
 async function generateEmbedding(text: string): Promise<number[]> {
   const config = getConfiguration()
 
@@ -290,12 +261,22 @@ async function generateEmbedding(text: string): Promise<number[]> {
   const { provider, model } = config.longTerm.embedding
 
   if (provider === 'openai' || provider === 'openai-compatible') {
-    const openai = getOpenAIClient()
-    const response = await openai.embeddings.create({
-      model: model || 'text-embedding-3-small',
+    const embeddingConfig = config.longTerm.embedding
+    const apiKey = embeddingConfig.openai?.apiKey ?? embeddingConfig.apiKey
+    const baseURL = embeddingConfig.openai?.baseURL ?? embeddingConfig.baseUrl ?? 'https://api.openai.com/v1/'
+
+    if (!apiKey) {
+      throw new Error('OpenAI API key is missing')
+    }
+
+    const { embedding } = await embed({
+      apiKey,
+      baseURL,
       input: text,
+      model: model || DEFAULT_OPENAI_EMBEDDING_MODEL,
     })
-    return response.data[0].embedding
+
+    return embedding
   }
   else if (provider === 'cloudflare') {
     const { cloudflare } = config.longTerm.embedding
@@ -320,7 +301,6 @@ async function generateEmbedding(text: string): Promise<number[]> {
     }
 
     const payload = await response.json() as Record<string, any>
-    console.info('[Memory Debug] Cloudflare API response structure:', JSON.stringify(payload, null, 2).substring(0, 500))
     const embedding = extractCloudflareEmbedding(payload)
 
     if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
@@ -518,7 +498,7 @@ export async function saveMessage(sessionId: string, message: Message, userId?: 
     ...message,
     timestamp: message.timestamp instanceof Date ? message.timestamp.toISOString() : message.timestamp,
     metadata: {
-      ...(message.metadata || {}),
+      ...message.metadata,
       ...(userId ? { userId } : {}),
     },
   }
@@ -537,18 +517,18 @@ export async function saveMessage(sessionId: string, message: Message, userId?: 
     await vercelKv.setex(key, ttl, trimmed)
   }
   else if (config.shortTerm.provider === 'upstash-redis') {
-    // Upstash Redis
+    // Upstash Redis - use atomic list operations to prevent race conditions
     const redis = getRedisClient()
-    const existing = await redis.get<Message[]>(key) || []
-    const updated = [...existing, normalizedMessage]
-
-    // Keep only last N messages
     const maxMessages = config.shortTerm.maxMessages || 20
-    const trimmed = updated.slice(-maxMessages)
-
-    // Save with TTL
     const ttl = config.shortTerm.ttlSeconds || 1800
-    await redis.setex(key, ttl, JSON.stringify(trimmed))
+
+    const pipeline = redis.pipeline()
+    pipeline.rpush(key, JSON.stringify(normalizedMessage))
+    pipeline.ltrim(key, -maxMessages, -1)
+    if (ttl > 0) {
+      pipeline.expire(key, ttl)
+    }
+    await pipeline.exec()
   }
   else {
     throw new Error(`Unsupported short-term provider: ${config.shortTerm.provider}`)
@@ -568,10 +548,11 @@ export async function getRecentMessages(sessionId: string, limit?: number): Prom
     messages = await vercelKv.get<Message[]>(key) || []
   }
   else if (config.shortTerm.provider === 'upstash-redis') {
+    // Use lrange to get list elements (matching atomic list operations in saveMessage)
     const redis = getRedisClient()
-    const data = await redis.get<string>(key)
-    if (data) {
-      messages = typeof data === 'string' ? JSON.parse(data) : data
+    const data = await redis.lrange(key, 0, -1)
+    if (data && data.length > 0) {
+      messages = data.map(item => typeof item === 'string' ? JSON.parse(item) : item)
     }
   }
   else {

@@ -2,16 +2,15 @@ import type { Pool } from 'pg'
 
 import type { IMemoryProvider, MemorySearchResult, Message } from '../../interfaces/memory.interface'
 import type { EmbeddingProviderConfiguration } from '../../types/config'
-
-import { env } from 'node:process'
-
-import OpenAI from 'openai'
+import type { EmbeddingClient } from '../../utils/embedding'
 
 import { createPool } from '@vercel/postgres'
 
+import { DEFAULT_EMBEDDING_DIMENSIONS } from '../../utils/constants'
+import { createEmbeddingClient, resolveEmbeddingConfiguration } from '../../utils/embedding'
+import { extractSessionId, extractUserId } from '../../utils/metadata'
+
 const DEFAULT_TABLE_NAME = 'conversations'
-const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small'
-const DEFAULT_EMBEDDING_DIMENSIONS = 1536
 
 export interface PostgresPgvectorMemoryOptions {
   connectionString?: string
@@ -35,32 +34,30 @@ interface MemoryRow {
 
 export class PostgresPgvectorMemoryProvider implements IMemoryProvider {
   private readonly pool: Pool
-  private readonly openai: OpenAI | null
   private readonly tableName: string
-  private readonly embeddingConfig: EmbeddingProviderConfiguration
-  private embeddingModel: string
-  private embeddingDimensions: number
+  private readonly embeddingClient: EmbeddingClient
+  private readonly embeddingDimensions: number
 
   constructor(options: PostgresPgvectorMemoryOptions = {}) {
     this.tableName = this.validateTableName(options.tableName ?? DEFAULT_TABLE_NAME)
-    this.embeddingConfig = this.resolveEmbeddingConfiguration(options.embedding, options.embeddingModel, options.openAIApiKey)
-    this.embeddingModel = this.embeddingConfig.model ?? DEFAULT_EMBEDDING_MODEL
     this.embeddingDimensions = options.embeddingDimensions ?? DEFAULT_EMBEDDING_DIMENSIONS
 
+    const embeddingConfig = resolveEmbeddingConfiguration(options.embedding, {
+      model: options.embeddingModel,
+      apiKey: options.openAIApiKey,
+    })
+    this.embeddingClient = createEmbeddingClient(embeddingConfig, { dimensions: this.embeddingDimensions })
+
     const connectionString = options.connectionString
-      ?? env.POSTGRES_URL
-      ?? env.POSTGRES_PRISMA_URL
-      ?? env.DATABASE_URL
+      ?? process.env.POSTGRES_URL
+      ?? process.env.POSTGRES_PRISMA_URL
+      ?? process.env.DATABASE_URL
 
     if (!options.pool && !connectionString) {
       throw new Error('PostgresPgvectorMemoryProvider requires a connection string or an existing Pool instance.')
     }
 
     this.pool = options.pool ?? createPool({ connectionString: connectionString! })
-
-    this.openai = this.embeddingConfig.provider === 'cloudflare'
-      ? null
-      : new OpenAI({ apiKey: this.embeddingConfig.apiKey, baseURL: this.embeddingConfig.baseUrl })
   }
 
   async initialize(): Promise<void> {
@@ -70,7 +67,7 @@ export class PostgresPgvectorMemoryProvider implements IMemoryProvider {
   }
 
   async addMessage(sessionId: string, message: Message): Promise<void> {
-    const derivedUserId = this.extractUserId(message)
+    const derivedUserId = extractUserId(message)
     if (!derivedUserId) {
       return
     }
@@ -99,7 +96,7 @@ export class PostgresPgvectorMemoryProvider implements IMemoryProvider {
   }
 
   async searchSimilar(query: string, userId: string, limit = 10): Promise<MemorySearchResult[]> {
-    const embedding = await this.generateEmbedding(query)
+    const embedding = await this.embeddingClient.generate(query)
     const vector = this.toVectorLiteral(embedding)
 
     const { rows } = await this.pool.query(
@@ -127,10 +124,10 @@ export class PostgresPgvectorMemoryProvider implements IMemoryProvider {
   }
 
   async saveLongTermMemory(message: Message, userId: string): Promise<void> {
-    const embedding = await this.generateEmbedding(message.content)
+    const embedding = await this.embeddingClient.generate(message.content)
     const vector = this.toVectorLiteral(embedding)
     const timestamp = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)
-    const sessionId = this.extractSessionId(message)
+    const sessionId = extractSessionId(message)
     const metadata = message.metadata ?? null
 
     await this.pool.query(
@@ -184,63 +181,6 @@ export class PostgresPgvectorMemoryProvider implements IMemoryProvider {
     )
   }
 
-  private async generateEmbedding(input: string): Promise<number[]> {
-    const trimmed = input.trim()
-    if (trimmed.length === 0) {
-      return Array.from({ length: this.embeddingDimensions }, () => 0)
-    }
-
-    let embedding: number[] = []
-
-    if (this.embeddingConfig.provider === 'cloudflare') {
-      embedding = await this.generateCloudflareEmbedding(trimmed)
-    }
-    else {
-      if (!this.openai) {
-        throw new Error('OpenAI-compatible client is not configured for embeddings.')
-      }
-
-      const response = await this.openai.embeddings.create({
-        model: this.embeddingModel,
-        input: trimmed,
-      })
-
-      embedding = response.data?.[0]?.embedding ?? []
-    }
-
-    if (!embedding.length) {
-      throw new Error('Failed to generate embedding for memory content.')
-    }
-
-    if (!this.embeddingDimensions) {
-      this.embeddingDimensions = embedding.length
-    }
-
-    if (embedding.length !== this.embeddingDimensions) {
-      throw new Error(`Embedding dimension mismatch. Expected ${this.embeddingDimensions}, received ${embedding.length}.`)
-    }
-
-    return embedding.map((value: number | string) => Number(value))
-  }
-
-  private extractUserId(message: Message): string | null {
-    const metadata = message.metadata ?? {}
-    const candidate = (metadata as Record<string, unknown>).userId
-      ?? (metadata as Record<string, unknown>).userID
-      ?? (metadata as Record<string, unknown>).user_id
-
-    return typeof candidate === 'string' && candidate.length > 0 ? candidate : null
-  }
-
-  private extractSessionId(message: Message): string | null {
-    const metadata = message.metadata ?? {}
-    const candidate = (metadata as Record<string, unknown>).sessionId
-      ?? (metadata as Record<string, unknown>).sessionID
-      ?? (metadata as Record<string, unknown>).session_id
-
-    return typeof candidate === 'string' && candidate.length > 0 ? candidate : null
-  }
-
   private rowToMessage(row: MemoryRow): Message {
     const metadata = this.parseMetadata(row.metadata)
     const timestamp = row.created_at instanceof Date ? row.created_at : new Date(row.created_at)
@@ -284,100 +224,5 @@ export class PostgresPgvectorMemoryProvider implements IMemoryProvider {
     }
 
     return name
-  }
-
-  private resolveEmbeddingConfiguration(
-    config: EmbeddingProviderConfiguration | undefined,
-    explicitModel?: string,
-    explicitApiKey?: string,
-  ): EmbeddingProviderConfiguration {
-    const provider = config?.provider
-      ?? (env.MEMORY_EMBEDDING_PROVIDER as EmbeddingProviderConfiguration['provider'] | undefined)
-      ?? 'openai'
-
-    const apiKey = config?.apiKey
-      ?? explicitApiKey
-      ?? env.MEMORY_EMBEDDING_API_KEY
-      ?? env.OPENAI_API_KEY
-
-    if (!apiKey) {
-      throw new Error('An embedding API key is required.')
-    }
-
-    const model = config?.model
-      ?? explicitModel
-      ?? env.MEMORY_EMBEDDING_MODEL
-      ?? DEFAULT_EMBEDDING_MODEL
-
-    const baseUrl = config?.baseUrl ?? env.MEMORY_EMBEDDING_BASE_URL
-    const accountId = config?.accountId ?? env.CLOUDFLARE_ACCOUNT_ID
-
-    if (provider === 'cloudflare' && !accountId) {
-      throw new Error('Cloudflare embedding provider requires an account ID.')
-    }
-
-    return {
-      provider,
-      apiKey,
-      model,
-      baseUrl,
-      accountId,
-    } satisfies EmbeddingProviderConfiguration
-  }
-
-  private async generateCloudflareEmbedding(input: string): Promise<number[]> {
-    const accountId = this.embeddingConfig.accountId
-    if (!accountId) {
-      throw new Error('Cloudflare account ID is not configured.')
-    }
-
-    const url = `${this.embeddingConfig.baseUrl ?? 'https://api.cloudflare.com/client/v4'}/accounts/${accountId}/ai/run/${this.embeddingConfig.model}`
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.embeddingConfig.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text: input }),
-    })
-
-    if (!response.ok) {
-      const body = await response.text()
-      throw new Error(`Cloudflare embedding request failed: ${response.status} ${body}`)
-    }
-
-    const payload = await response.json() as Record<string, any>
-    const embedding = this.extractCloudflareEmbedding(payload)
-
-    if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
-      throw new Error('Cloudflare embedding response did not include an embedding vector.')
-    }
-
-    return embedding.map((value: number | string) => Number(value))
-  }
-
-  private extractCloudflareEmbedding(payload: Record<string, any>): number[] | undefined {
-    const result = payload.result ?? payload
-
-    if (Array.isArray(result?.data) && result.data.length > 0) {
-      const candidate = result.data[0]
-      if (Array.isArray(candidate?.embedding)) {
-        return candidate.embedding as number[]
-      }
-      if (Array.isArray(candidate?.vector)) {
-        return candidate.vector as number[]
-      }
-    }
-
-    if (Array.isArray(result?.embedding)) {
-      return result.embedding as number[]
-    }
-
-    if (Array.isArray(result?.data?.embedding)) {
-      return result.data.embedding as number[]
-    }
-
-    return undefined
   }
 }

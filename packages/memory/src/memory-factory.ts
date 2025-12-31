@@ -290,20 +290,16 @@ export class MemorySystemFactory {
       return null
     }
 
-    if (config.provider !== 'postgres-pgvector') {
-      throw new Error(`Unsupported long-term memory provider: ${config.provider}`)
-    }
-
-    const connectionString = config.connection.connectionString
-      ?? (config.connection.host
-        ? this.composePostgresConnectionString(config.connection)
-        : undefined)
-      ?? options.longTermOptions?.connectionString
-      ?? envVars.POSTGRES_URL
-      ?? envVars.POSTGRES_PRISMA_URL
-      ?? envVars.DATABASE_URL
-
     if (config.provider === 'postgres-pgvector') {
+      const connectionString = config.connection.connectionString
+        ?? (config.connection.host
+          ? this.composePostgresConnectionString(config.connection)
+          : undefined)
+        ?? options.longTermOptions?.connectionString
+        ?? envVars.POSTGRES_URL
+        ?? envVars.POSTGRES_PRISMA_URL
+        ?? envVars.DATABASE_URL
+
       const longTermOptions: PostgresPgvectorMemoryOptions = {
         connectionString,
         embedding: config.embedding,
@@ -322,7 +318,7 @@ export class MemorySystemFactory {
         throw new Error('Qdrant configuration requires both url and collectionName.')
       }
 
-      const options: QdrantMemoryOptions = {
+      const qdrantOptions: QdrantMemoryOptions = {
         url: qdrantConfig.url,
         apiKey: qdrantConfig.apiKey,
         collectionName: qdrantConfig.collectionName ?? undefined,
@@ -330,7 +326,7 @@ export class MemorySystemFactory {
         embedding: config.embedding,
       }
 
-      return new QdrantMemoryProvider(options)
+      return new QdrantMemoryProvider(qdrantOptions)
     }
 
     throw new Error(`Unsupported long-term memory provider: ${config.provider satisfies never}`)
