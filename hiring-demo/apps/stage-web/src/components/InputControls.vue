@@ -15,7 +15,7 @@
  * 4. Mobile-friendly responsive design / 移动端适配
  */
 
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { ImageInputState, InputMode, VoiceInputState } from '../types'
 
 // ============================================
@@ -99,7 +99,11 @@ let audioStream: MediaStream | null = null
  * 检查是否支持语音录制
  */
 const isVoiceSupported = computed(() => {
-  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+  return typeof navigator !== 'undefined'
+    && !!navigator.mediaDevices
+    && !!navigator.mediaDevices.getUserMedia
+    && typeof window !== 'undefined'
+    && 'MediaRecorder' in window
 })
 
 /**
@@ -201,10 +205,19 @@ async function startVoiceRecording(): Promise<void> {
  * TODO: 实现录制停止逻辑
  */
 function stopVoiceRecording(): void {
-  if (!voiceState.value.isRecording || !mediaRecorder) return
+  if (!voiceState.value.isRecording || !mediaRecorder) {
+    cleanupRecording()
+    return
+  }
 
-  // TODO: Stop the MediaRecorder
-  mediaRecorder.stop()
+  try {
+    mediaRecorder.stop()
+  }
+  catch (error) {
+    console.error('Failed to stop recording:', error)
+    emit('error', 'Stopping recording failed')
+    cleanupRecording()
+  }
 }
 
 /**
@@ -236,6 +249,10 @@ function cleanupRecording(): void {
   }
 
   // Reset state
+  if (mediaRecorder) {
+    mediaRecorder.ondataavailable = null
+    mediaRecorder.onstop = null
+  }
   mediaRecorder = null
   audioChunks = []
   voiceState.value.isRecording = false
@@ -252,6 +269,7 @@ function cleanupRecording(): void {
  * 触发文件输入点击
  */
 function triggerImageSelect(): void {
+  if (props.disabled) return
   fileInputRef.value?.click()
 }
 
@@ -360,6 +378,7 @@ function removeImage(): void {
  */
 function switchMode(mode: InputMode): void {
   if (props.disabled) return
+  if (activeMode.value === mode) return
 
   // Cancel any ongoing recording when switching modes
   if (voiceState.value.isRecording && mode !== 'voice') {
@@ -377,6 +396,18 @@ function switchMode(mode: InputMode): void {
 onBeforeUnmount(() => {
   // Cleanup on component unmount
   cleanupRecording()
+})
+
+watch(() => props.mode, (mode) => {
+  if (mode && mode !== activeMode.value) {
+    switchMode(mode)
+  }
+})
+
+watch(() => props.disabled, (disabled) => {
+  if (disabled && voiceState.value.isRecording) {
+    cancelVoiceRecording()
+  }
 })
 </script>
 

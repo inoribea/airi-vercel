@@ -26,7 +26,7 @@ const settingsStore = useSettingsStore()
 // State - 状态
 // ============================================
 
-/** Current AI status */
+/** 当前助手状态（测试用） */
 const aiStatus = ref<AIStatus>('online')
 
 /** Demo messages */
@@ -34,7 +34,7 @@ const messages = ref<ChatMessage[]>([
   {
     id: '1',
     role: 'assistant',
-    content: 'Hello! I\'m your AI assistant. How can I help you today?',
+    content: 'Hello! I\'m your assistant. How can I help you today?',
     timestamp: new Date(Date.now() - 60000),
     status: 'sent',
   },
@@ -52,14 +52,14 @@ const activeTab = ref<'chat' | 'settings'>('chat')
  * 处理消息发送
  */
 function handleSendMessage(content: string, images?: string[]): void {
-  // Simulate AI thinking
+  // 模拟助手处理流程
   aiStatus.value = 'thinking'
 
-  // Simulate AI response after delay
+  // 模拟延迟响应
   setTimeout(() => {
     aiStatus.value = 'responding'
 
-    // Add AI response
+    // 添加响应消息
     setTimeout(() => {
       messages.value.push({
         id: `msg_${Date.now()}`,
@@ -80,7 +80,7 @@ function handleSendMessage(content: string, images?: string[]): void {
  */
 function handleVoiceStop(audioBlob: Blob): void {
   console.log('Voice recording completed:', audioBlob.size, 'bytes')
-  // In a real implementation, this would be sent for transcription
+  // 真实场景可用于语音转写
 }
 
 /**
@@ -89,12 +89,12 @@ function handleVoiceStop(audioBlob: Blob): void {
  */
 function handleImageSelect(file: File, preview: string): void {
   console.log('Image selected:', file.name, preview.length)
-  // In a real implementation, this would be attached to the message
+  // 真实场景可挂载到消息发送参数
 }
 
 /**
- * Cycle through AI statuses for demo
- * 循环切换 AI 状态用于演示
+ * Cycle through helper statuses for demo
+ * 循环切换助手状态用于演示
  */
 function cycleStatus(): void {
   const statuses: AIStatus[] = ['online', 'thinking', 'responding', 'offline', 'error']
@@ -124,7 +124,7 @@ onMounted(() => {
     >
       <div flex items-center gap-4>
         <h1 text-xl font-bold text-gray-900 dark:text-gray-100>
-          AIRI Frontend Test
+          Frontend Test Bench
         </h1>
         <StatusIndicator
           :status="aiStatus"

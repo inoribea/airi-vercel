@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-这是一个用于测试前端开发者能力的半完成项目。项目基于AIRI虚拟角色平台，包含一些已完成的功能和一些需要实现的功能。
+这是一个用于测试前端开发者能力的半完成项目，基于现有的 `stage-web` 代码骨架，包含已完成和待实现的功能。
 
 ## 技术栈
 
@@ -65,41 +65,32 @@ pnpm dev
 - 测试页面：http://localhost:5173/test
 - 记忆设置：http://localhost:5173/settings/memory
 
-## 测试任务
+## 测试任务（自选，可用自助工具）
 
-请实现以下功能（详细要求见 `TEST_SPEC.md`）：
+- 面试总时长 60 分钟，可使用你熟悉的工具完成。
+- 选择规则：从下方任务池中自选 1 个高星（★★★★☆/★★★★★）或若干中低星（★★★☆ 以下）的任务（建议总计 ≥4 星），完成度与代码质量并重。
+- 难度标识：★☆☆☆☆（入门）~ ★★★★★（最高）。
+- 详细功能要求见 `TEST_SPEC.md`，下方仅列核心点位与入口。
 
-### 任务 1: 消息系统界面 (60分钟)
-- 消息气泡组件（区分发送/接收）
-- 文本消息发送功能
-- 表情符号选择器
-- 消息时间戳显示
-- 用户头像显示
-- 消息滚动到最新位置
+### 任务池（拆分子项可自由组合）
 
-### 任务 2: 记忆系统配置 (45分钟)
-- 记忆参数配置表单
-- 参数验证（数字范围、格式检查）
-- 设置保存和加载功能
-- 用户友好的UI设计
+- 选择策略：用 60 分钟完成 1 个高星子项或若干低星子项（建议总计 ≥4 星），可自由跨任务组合。
+- 评分重点：完成度 > 难度，代码质量/可读性/可维护性同等重要。
 
-### 任务 3: 多模态输入功能 (60分钟)
-- 语音输入按钮及功能
-- 图像上传功能（文件选择、预览）
-- 输入状态指示器
-- 移动端适配
+#### 聊天与多模态（Chat & Input）
+- ★★★★★ 多模态输入整合（全链路）：语音触发 + 图片上传预览 + 输入态切换与状态指示；入口 `apps/stage-web/src/components/InputControls.vue`
+- ★★★★☆ 消息流体验：发送/接收气泡 + 表情选择 + 自动滚动保持最新；入口 `apps/stage-web/src/components/ChatInterface.vue`
+- ★★★☆☆ 输入状态指示：发送中/上传中/录音中状态可视化，含颜色与动画；入口 `apps/stage-web/src/components/StatusIndicator.vue`
+- ★★☆☆☆ 表情插入与文本发送：表情面板接入、基础文本发送链路；入口 `apps/stage-web/src/components/ChatInterface.vue`
 
-### 任务 4: 实时状态显示 (30分钟)
-- AI助手状态显示（在线/思考/响应/离线）
-- 状态变化动画
-- 颜色编码状态
-- 实时状态更新
+#### 配置与偏好（Settings）
+- ★★★★☆ 记忆配置可靠性：参数验证（范围/格式）、错误提示、保存与加载逻辑；入口 `apps/stage-web/src/pages/settings/memory/index.vue`
+- ★★★☆☆ 用户偏好持久化：主题切换、本地存储同步、设置变化实时响应；入口 `apps/stage-web/src/stores/settings.ts`、`apps/stage-web/src/pages/test.vue`
+- ★★☆☆☆ 配置表单可用性：表单分组、提示文案、基础校验反馈；入口 `apps/stage-web/src/pages/settings/memory/index.vue`
 
-### 任务 5: 用户偏好设置 (45分钟)
-- 主题切换（明暗模式）
-- 个人设置保存到本地存储
-- 设置同步和加载
-- 设置更改响应
+#### 状态可视化（Status）
+- ★★★☆☆ 助手状态展示：在线/思考/响应/离线的颜色编码、过渡动画；入口 `apps/stage-web/src/components/StatusIndicator.vue`
+- ★★☆☆☆ 状态数据接入：从现有 store/composable 读取状态并驱动 UI；入口 `apps/stage-web/src/components/StatusIndicator.vue`
 
 ## 开发要求
 
@@ -121,14 +112,19 @@ pnpm dev
 - 合理的数据流设计
 - 错误处理机制
 
-## 评分标准
+## 评估参考（无分值，仅供面试官参考）
+- 功能完成度：是否达成自选子项的目标和边界处理。
+- 代码质量：类型与校验、职责拆分、命名与可读性、重复与死代码控制。
+- 体验：交互反馈、动画/状态可视化、移动端适配、基础可访问性。
+- 工程习惯：最小验证步骤、自检与报错提示、遵循现有样式和状态管理约定。
 
-| 评估维度 | 权重 | 说明 |
-|---------|------|------|
-| 功能实现 | 40% | 功能完整性、交互流畅性 |
-| 代码质量 | 30% | 代码结构、可维护性、类型安全 |
-| UI/UX设计 | 20% | 界面美观、用户体验 |
-| 技术运用 | 10% | Vue 3特性、状态管理、响应式设计 |
+## 运行 / 调试 / 调用
+- 安装：`pnpm install`
+- 开发：`pnpm dev`（默认端口 `5173`），测试页 `/test`，记忆页 `/settings/memory`
+- 类型检查：`pnpm -F @proj-airi/stage-web typecheck`
+- Lint：`pnpm -F @proj-airi/stage-web lint`
+- 构建预览：`pnpm -F @proj-airi/stage-web build && pnpm -F @proj-airi/stage-web preview`
+- API 约定：当前无真实后端调用，前端逻辑均在本地 store/composable 内模拟；如需对接自定义接口，可在 `api/` 目录增加 Vercel Serverless 函数（`vercel.json` 已允许 `/api/*`），或在 `apps/stage-web/src/stores/chat.ts` / `settings.ts` 等处添加 fetch/mock。
 
 ## 提示
 

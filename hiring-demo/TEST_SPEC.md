@@ -1,207 +1,69 @@
 # 前端开发测试说明
 
-## 测试目标
+本说明用于 60 分钟面试，候选人可跨子项自选实现。可使用任意自助工具，最终以可运行代码和完成度为准。
 
-评估候选人的前端开发能力，包括：
-- Vue 3 和 TypeScript 使用能力
-- 组件设计和开发能力
-- 状态管理实现
-- UI/UX 设计能力
-- 代码质量和结构
+## 测试模式与选题
+- 时间：60 分钟。
+- 选题：完成 1 个高星（★★★★☆/★★★★★）或若干中低星子项（总星级 ≥ 4），可跨主题组合。
+- 提交：确保能运行，说明已完成子项，必要时附最小验证步骤。
 
-## 测试时间
+## 考察维度（无固定分值）
+- 功能完成度：达成子项目标并覆盖关键边界。
+- 代码质量：类型/校验、职责拆分、命名与可读性、避免重复和死代码。
+- 体验：交互反馈、动画与状态可视化、移动端适配、基础可访问性。
+- 工程习惯：最小自测步骤、错误提示、符合现有样式与状态管理约定。
 
-建议测试时间为 4-6 小时
+## 任务子项清单与达成定义
 
-## 项目设置
+### 聊天与多模态（Chat & Input）
+- ★★★★★ 多模态输入整合（`apps/stage-web/src/components/InputControls.vue`）
+  - 达成：语音触发流程（启动/结束/错误提示）、图片上传与预览、输入模式切换，状态指示同步。
+  - 验收：按钮状态与异常提示可见，图片预览无刷新，移动端触控可用。
+- ★★★★☆ 消息流体验（`apps/stage-web/src/components/ChatInterface.vue`）
+  - 达成：发送/接收气泡样式、表情插入、发送后自动滚动最新。
+  - 验收：气泡对齐与头像/时间清晰，表情能插入文本，长列表保持滚动定位。
+- ★★★☆☆ 输入状态指示（`apps/stage-web/src/components/StatusIndicator.vue`）
+  - 达成：发送中/上传中/录音中等状态的颜色/动效展示，可与输入/上传逻辑联动。
+  - 验收：状态切换平滑，无闪烁或长时间卡死态。
+- ★★☆☆☆ 表情插入与文本发送（`apps/stage-web/src/components/ChatInterface.vue`）
+  - 达成：表情面板选择并写入输入框，基础文本发送链路。
+  - 验收：表情正确插入，发送后清空/重置可用态。
 
-1. 安装依赖：`pnpm install`
-2. 启动开发服务器：`pnpm dev`
-3. 访问：`http://localhost:5173`
-4. 测试页面：`http://localhost:5173/test`
+### 配置与偏好（Settings）
+- ★★★★☆ 记忆配置可靠性（`apps/stage-web/src/pages/settings/memory/index.vue`）
+  - 达成：参数范围/格式校验，错误提示清晰；保存/加载流程可复用；边界回退策略。
+  - 验收：输入非法值有即时提示；保存后刷新仍能加载；移动端表单可操作。
+- ★★★☆☆ 用户偏好持久化（`apps/stage-web/src/stores/settings.ts`, `apps/stage-web/src/pages/test.vue`）
+  - 达成：主题切换、本地存储同步加载、设置变化实时响应 UI。
+  - 验收：刷新后仍保留主题；切换无明显闪屏；多标签页可同步（可模拟）。
+- ★★☆☆☆ 配置表单可用性（`apps/stage-web/src/pages/settings/memory/index.vue`）
+  - 达成：表单分组、提示文案、基础必填/格式校验，提交/重置流程清晰。
+  - 验收：错误态提示位置合理，键盘/触控可用。
 
-## 项目结构
+### 状态可视化（Status）
+- ★★★☆☆ 助手状态展示（`apps/stage-web/src/components/StatusIndicator.vue`）
+  - 达成：在线/思考/响应/离线颜色编码，过渡动画与可读标签。
+  - 验收：状态切换时动画平滑且含文字提示，可适配暗色。
+- ★★☆☆☆ 状态数据接入（`apps/stage-web/src/components/StatusIndicator.vue`）
+  - 达成：从现有 store/composable 读取状态并驱动 UI，含空态/错误态保护。
+  - 验收：无数据时有兜底，状态切换不抛异常。
 
+## 路由与入口（已存在页面树）
 ```
-apps/stage-web/src/
-├── components/
-│   ├── ChatInterface.vue      # 任务1: 聊天界面组件
-│   ├── InputControls.vue      # 任务3: 多模态输入控件
-│   └── StatusIndicator.vue    # 任务4: 状态指示器
-├── pages/
-│   ├── test.vue               # 测试整合页面
-│   └── settings/
-│       └── memory/
-│           └── index.vue      # 任务2: 记忆系统配置
-├── stores/
-│   ├── chat.ts                # 聊天消息状态管理
-│   └── settings.ts            # 任务5: 用户偏好设置
-└── types/
-    └── index.ts               # 类型定义
+/
+├─ /test                         -> apps/stage-web/src/pages/test.vue
+├─ /settings
+│  ├─ /settings/memory           -> apps/stage-web/src/pages/settings/memory/index.vue
+│  └─ /settings/system           -> apps/stage-web/src/pages/settings/system/index.vue
+│      └─ /settings/system/developer -> apps/stage-web/src/pages/settings/system/developer.vue
+├─ /devtools
+│  ├─ /devtools/background-removal           -> apps/stage-web/src/pages/devtools/background-removal.vue
+│  ├─ /devtools/use-magic-keys              -> apps/stage-web/src/pages/devtools/use-magic-keys.vue
+│  ├─ /devtools/audio-record                -> apps/stage-web/src/pages/devtools/audio-record.vue
+│  ├─ /devtools/background-gradient-blending-> apps/stage-web/src/pages/devtools/background-gradient-blending.vue
+│  ├─ /devtools/gesture-circle              -> apps/stage-web/src/pages/devtools/gesture-circle.vue
+│  └─ /devtools/polaroid                    -> apps/stage-web/src/pages/devtools/polaroid.vue
+└─ /* (fallback)                 -> apps/stage-web/src/pages/[...all].vue
 ```
 
-## 测试任务详情
-
-### 任务 1: 消息系统界面 (60 分钟)
-
-**文件位置**: `apps/stage-web/src/components/ChatInterface.vue`
-
-**已提供**:
-- 基础组件结构和Props定义
-- 消息气泡基本样式
-- 发送按钮和表情选择器UI框架
-
-**需要实现**:
-- [ ] 完善消息气泡样式（区分发送/接收）
-- [ ] 实现文本消息发送功能
-- [ ] 完善表情符号选择器交互
-- [ ] 添加消息时间戳智能显示（今天/昨天/具体日期）
-- [ ] 实现消息列表自动滚动
-- [ ] 添加消息发送动画效果
-
-**评估要点**:
-- 组件结构清晰度
-- 用户交互流畅性
-- 样式美观度
-
----
-
-### 任务 2: 记忆系统配置 (45 分钟)
-
-**文件位置**: `apps/stage-web/src/pages/settings/memory/index.vue`
-
-**已提供**:
-- 表单基础结构
-- 参数验证逻辑框架
-- 本地存储保存/加载基础实现
-
-**需要实现**:
-- [ ] 完善参数验证规则和错误提示
-- [ ] 实现表单字段联动验证
-- [ ] 添加设置变更确认机制
-- [ ] 实现设置导入/导出功能
-- [ ] 优化移动端表单体验
-
-**评估要点**:
-- 表单验证完整性
-- 用户体验设计
-- 错误处理机制
-
----
-
-### 任务 3: 多模态输入功能 (60 分钟)
-
-**文件位置**: `apps/stage-web/src/components/InputControls.vue`
-
-**已提供**:
-- 输入模式切换按钮
-- 语音录制基础框架
-- 图像上传基础框架
-
-**需要实现**:
-- [ ] 完善语音录制波形显示
-- [ ] 实现语音转文字集成（模拟）
-- [ ] 完善图像上传预览和压缩
-- [ ] 添加拖拽上传支持
-- [ ] 实现移动端适配和触摸交互
-- [ ] 添加输入状态实时指示
-
-**评估要点**:
-- 多媒体API使用熟练度
-- 用户交互设计
-- 错误处理和边界情况
-
----
-
-### 任务 4: 实时状态显示 (30 分钟)
-
-**文件位置**: `apps/stage-web/src/components/StatusIndicator.vue`
-
-**已提供**:
-- 状态枚举和配置
-- 基础状态显示UI
-- 脉冲动画框架
-
-**需要实现**:
-- [ ] 完善状态变化过渡动画
-- [ ] 实现状态历史记录显示（可选）
-- [ ] 添加自定义状态消息支持
-- [ ] 实现状态颜色主题适配
-- [ ] 添加无障碍访问支持
-
-**评估要点**:
-- CSS动画使用能力
-- 组件可配置性设计
-- 代码可维护性
-
----
-
-### 任务 5: 用户偏好设置 (45 分钟)
-
-**文件位置**: `apps/stage-web/src/stores/settings.ts` 及测试页面
-
-**已提供**:
-- Pinia Store基础结构
-- 主题切换逻辑框架
-- 本地存储持久化
-
-**需要实现**:
-- [ ] 完善系统主题检测和响应
-- [ ] 实现设置跨标签页同步
-- [ ] 添加设置变更事件广播
-- [ ] 实现设置迁移（版本升级）
-- [ ] 完善TypeScript类型安全
-
-**评估要点**:
-- 状态管理设计
-- 持久化策略
-- 响应式系统理解
-
----
-
-## 评分标准
-
-### 功能实现 (40%)
-- 功能是否按要求完整实现
-- 交互是否流畅自然
-- 边界情况处理
-
-### 代码质量 (30%)
-- 代码结构清晰度
-- TypeScript 类型使用
-- 组件职责划分
-- 代码注释质量
-
-### UI/UX 设计 (20%)
-- 界面美观度
-- 用户体验流畅性
-- 响应式设计
-- 动画效果
-
-### 技术运用 (10%)
-- Vue 3 特性使用（Composition API, Suspense等）
-- 状态管理实现
-- 性能优化考虑
-
-## 提交要求
-
-1. 完成所有功能任务
-2. 代码提交到本地仓库
-3. 确保项目可正常运行
-4. 代码注释清晰（中英文均可）
-5. 可选：编写简单的README说明你的实现思路
-
-## 加分项
-
-- 添加单元测试
-- 实现额外的用户体验优化
-- 使用Vue 3高级特性
-- 性能优化实践
-- 无障碍访问支持
-
-## 注意事项
-
-- 代码中已标注 `TODO` 的地方是需要完成或优化的部分
-- 可以自由添加新的组件和工具函数
-- 鼓励使用现有的UI组件库（如已引入的UnoCSS）
-- 遇到问题可以查阅文档，但不要直接复制大段代码
+组件入口（无独立路由）：`apps/stage-web/src/components/ChatInterface.vue`、`InputControls.vue`、`StatusIndicator.vue`。可在 `/test` 页面或自行挂载验证。

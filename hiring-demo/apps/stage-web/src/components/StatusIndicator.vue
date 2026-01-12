@@ -120,10 +120,14 @@ const SIZE_CONFIGS = {
 // State - 状态
 // ============================================
 
+function normalizeStatus(status?: AIStatus): AIStatus {
+  return status && status in STATUS_CONFIGS ? status : 'offline'
+}
+
 /** Current status (internal) */
-const currentStatus = ref<AIStatus>(props.status)
+const currentStatus = ref<AIStatus>(normalizeStatus(props.status))
 /** Previous status for transition */
-const previousStatus = ref<AIStatus>(props.status)
+const previousStatus = ref<AIStatus>(normalizeStatus(props.status))
 /** Is transitioning between states */
 const isTransitioning = ref(false)
 
@@ -135,9 +139,7 @@ const isTransitioning = ref(false)
  * Get current status configuration
  * 获取当前状态配置
  */
-const statusConfig = computed(() => {
-  return STATUS_CONFIGS[currentStatus.value]
-})
+const statusConfig = computed(() => STATUS_CONFIGS[normalizeStatus(currentStatus.value)])
 
 /**
  * Get status label (with custom override support)
@@ -156,7 +158,7 @@ const statusLabel = computed(() => {
  * 获取尺寸配置
  */
 const sizeConfig = computed(() => {
-  return SIZE_CONFIGS[props.size]
+  return SIZE_CONFIGS[props.size] ?? SIZE_CONFIGS.md
 })
 
 /**
@@ -192,7 +194,8 @@ const colorStyle = computed(() => ({
  * TODO: 实现状态之间的平滑过渡
  */
 function updateStatus(newStatus: AIStatus): void {
-  if (newStatus === currentStatus.value) return
+  const normalized = normalizeStatus(newStatus)
+  if (normalized === currentStatus.value) return
 
   const oldStatus = currentStatus.value
   previousStatus.value = oldStatus
@@ -202,8 +205,8 @@ function updateStatus(newStatus: AIStatus): void {
 
   // Update status after brief delay for animation
   setTimeout(() => {
-    currentStatus.value = newStatus
-    emit('status-change', newStatus, oldStatus)
+    currentStatus.value = normalized
+    emit('status-change', normalized, oldStatus)
 
     // End transition
     setTimeout(() => {
@@ -247,7 +250,7 @@ function getStatusIcon(status: AIStatus): string {
  * 监听外部状态属性变化
  */
 watch(() => props.status, (newStatus) => {
-  updateStatus(newStatus)
+  updateStatus(normalizeStatus(newStatus))
 })
 
 // ============================================

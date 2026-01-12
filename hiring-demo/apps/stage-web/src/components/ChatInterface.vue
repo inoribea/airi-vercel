@@ -56,8 +56,28 @@ const emit = defineEmits<{
 // State - 状态
 // ============================================
 
+/** Normalize incoming messages to avoid runtime errors */
+function normalizeMessage(message: ChatMessage): ChatMessage {
+  const parsedTimestamp = (() => {
+    if (message.timestamp instanceof Date) return message.timestamp
+    const parsed = new Date(message.timestamp ?? Date.now())
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed
+  })()
+
+  return {
+    id: message.id ?? generateId(),
+    role: message.role ?? 'assistant',
+    content: message.content ?? '',
+    // 允许字符串/时间戳传入，统一转为 Date，避免格式错误导致渲染异常
+    timestamp: parsedTimestamp,
+    status: message.status ?? 'sent',
+    images: message.images ?? [],
+    avatar: message.avatar,
+  }
+}
+
 /** Message list ref */
-const messageList = ref<ChatMessage[]>([...props.messages])
+const messageList = ref<ChatMessage[]>(props.messages.map(normalizeMessage))
 /** Input text ref */
 const inputText = ref('')
 /** Chat container ref for scrolling */
@@ -105,11 +125,12 @@ function generateId(): string {
  * @param date - The date to format
  * @returns Formatted time string (e.g., "14:30" or "Yesterday 14:30")
  */
-function formatTimestamp(date: Date): string {
-  // TODO: Implement this
-  // Hint: Use toLocaleTimeString or create custom formatting
-  // 提示：使用 toLocaleTimeString 或创建自定义格式化
-  return date.toLocaleTimeString('zh-CN', {
+function formatTimestamp(date: Date | string | number): string {
+  const parsed = date instanceof Date ? date : new Date(date)
+
+  if (Number.isNaN(parsed.getTime())) return ''
+
+  return parsed.toLocaleTimeString('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
   })
@@ -124,11 +145,11 @@ function formatTimestamp(date: Date): string {
  */
 async function scrollToBottom(): Promise<void> {
   await nextTick()
-  // TODO: Implement this
-  // Hint: Use scrollIntoView or scrollTop
-  // 提示：使用 scrollIntoView 或 scrollTop
   if (chatContainerRef.value) {
-    chatContainerRef.value.scrollTop = chatContainerRef.value.scrollHeight
+    chatContainerRef.value.scrollTo({
+      top: chatContainerRef.value.scrollHeight,
+      behavior: 'smooth',
+    })
   }
 }
 
@@ -145,21 +166,16 @@ async function sendMessage(): Promise<void> {
   const content = inputText.value.trim()
   if (!content) return
 
-  // TODO: Implement message sending
-  // 1. Create a new message object
-  // 2. Add it to the message list
-  // 3. Clear the input
-  // 4. Emit the send event
-  // 5. Scroll to bottom
+  isSending.value = true
 
-  const newMessage: ChatMessage = {
+  const newMessage = normalizeMessage({
     id: generateId(),
     role: 'user',
     content,
     timestamp: new Date(),
     status: 'sending',
     avatar: props.userAvatar,
-  }
+  } as ChatMessage)
 
   messageList.value.push(newMessage)
   inputText.value = ''
@@ -173,6 +189,7 @@ async function sendMessage(): Promise<void> {
     if (msg) {
       msg.status = 'sent'
     }
+    isSending.value = false
   }, 500)
 
   await scrollToBottom()
@@ -188,9 +205,6 @@ async function sendMessage(): Promise<void> {
  * @param emoji - The selected emoji
  */
 function handleEmojiSelect(emoji: string): void {
-  // TODO: Implement this
-  // Insert emoji at cursor position or append to input
-  // 在光标位置插入表情或追加到输入框
   inputText.value += emoji
   showEmojiPicker.value = false
 }
@@ -203,7 +217,6 @@ function handleEmojiSelect(emoji: string): void {
  * TODO: 实现 Enter 键发送（Shift+Enter 换行）
  */
 function handleKeydown(event: KeyboardEvent): void {
-  // TODO: Implement this
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
     sendMessage()
@@ -218,9 +231,6 @@ function handleKeydown(event: KeyboardEvent): void {
  * TODO: 实现动态样式
  */
 function getMessageClass(role: MessageRole): string {
-  // TODO: Implement this
-  // Return different classes for user vs assistant messages
-  // 为用户和助手消息返回不同的类
   return role === 'user' ? 'message-user' : 'message-assistant'
 }
 
@@ -233,7 +243,11 @@ function getMessageClass(role: MessageRole): string {
  * 监听外部消息更新
  */
 watch(() => props.messages, (newMessages) => {
-  messageList.value = [...newMessages]
+  messageList.value = newMessages.map(normalizeMessage)
+  scrollToBottom()
+}, { deep: true })
+
+watch(messageList, () => {
   scrollToBottom()
 }, { deep: true })
 
